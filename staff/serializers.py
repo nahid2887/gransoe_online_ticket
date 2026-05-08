@@ -52,10 +52,15 @@ class StaffLoginSerializer(serializers.Serializer):
     def validate(self, data):
         email = data.get('email')
         password = data.get('password')
+        # Try finding user by email first, then by username for flexibility
+        user = None
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError({'email': 'Email not found.'})
+            try:
+                user = User.objects.get(username=email)
+            except User.DoesNotExist:
+                raise serializers.ValidationError({'email': 'Email not found.'})
         if not user.check_password(password):
             raise serializers.ValidationError({'password': 'Invalid password.'})
         data['user'] = user
@@ -64,6 +69,41 @@ class StaffLoginSerializer(serializers.Serializer):
 
 class StaffAuthResponseSerializer(serializers.Serializer):
     staff = StaffDetailSerializer()
+    access_token = serializers.CharField()
+    refresh_token = serializers.CharField()
+    message = serializers.CharField()
+
+
+class SuperuserDetailSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    email = serializers.EmailField()
+    username = serializers.CharField()
+    is_superuser = serializers.BooleanField()
+    is_staff = serializers.BooleanField()
+    date_joined = serializers.DateTimeField()
+
+
+class SuperuserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get('password')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({'email': 'Email not found.'})
+        if not user.check_password(password):
+            raise serializers.ValidationError({'password': 'Invalid password.'})
+        if not user.is_superuser:
+            raise serializers.ValidationError({'permission': 'User is not a superuser.'})
+        data['user'] = user
+        return data
+
+
+class SuperuserAuthResponseSerializer(serializers.Serializer):
+    superuser = SuperuserDetailSerializer()
     access_token = serializers.CharField()
     refresh_token = serializers.CharField()
     message = serializers.CharField()

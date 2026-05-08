@@ -12,6 +12,9 @@ from .serializers import (
     StaffLoginSerializer,
     StaffDetailSerializer,
     StaffAuthResponseSerializer,
+    SuperuserLoginSerializer,
+    SuperuserAuthResponseSerializer,
+    SuperuserDetailSerializer,
 )
 
 
@@ -97,5 +100,52 @@ class StaffLoginView(GenericAPIView):
 class StaffViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Staff.objects.all()
     serializer_class = StaffDetailSerializer
+
+
+@extend_schema(
+    request=SuperuserLoginSerializer,
+    responses=SuperuserAuthResponseSerializer,
+    description="Superuser login using email and password. Returns user details and tokens.",
+)
+class SuperuserLoginView(GenericAPIView):
+    serializer_class = SuperuserLoginSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+
+        # Prepare superuser detail data
+        super_data = {
+            'id': user.id,
+            'email': user.email,
+            'username': user.username,
+            'is_superuser': user.is_superuser,
+            'is_staff': user.is_staff,
+            'date_joined': user.date_joined,
+        }
+
+        # Generate tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        response_data = {
+            'superuser': super_data,
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'message': 'Superuser login successful'
+        }
+
+        response = Response(response_data, status=status.HTTP_200_OK)
+        response.set_cookie(
+            key='refresh_token',
+            value=refresh_token,
+            max_age=86400,
+            secure=False,
+            httponly=True,
+            samesite='Lax'
+        )
+        return response
     permission_classes = [AllowAny]
     lookup_field = 'user__id'

@@ -1,7 +1,7 @@
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import GenericAPIView
 from django.contrib.auth.models import User
@@ -15,6 +15,10 @@ from .serializers import (
     SuperuserLoginSerializer,
     SuperuserAuthResponseSerializer,
     SuperuserDetailSerializer,
+    SuperuserProfileSerializer,
+    SuperuserProfileResponseSerializer,
+    SuperuserPasswordChangeSerializer,
+    SuperuserPasswordChangeResponseSerializer,
 )
 
 
@@ -147,5 +151,93 @@ class SuperuserLoginView(GenericAPIView):
             samesite='Lax'
         )
         return response
-    permission_classes = [AllowAny]
-    lookup_field = 'user__id'
+
+
+@extend_schema(
+    responses=SuperuserDetailSerializer,
+    description="Get the logged-in superuser profile.",
+)
+class SuperuserProfileView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_superuser(self):
+        user = self.request.user
+        if not user.is_superuser:
+            return None
+        return user
+
+    def get(self, request, *args, **kwargs):
+        user = self.get_superuser()
+        if user is None:
+            return Response({'detail': 'User is not a superuser.'}, status=status.HTTP_403_FORBIDDEN)
+        response_data = {
+            'id': user.id,
+            'email': user.email,
+            'username': user.username,
+            'is_superuser': user.is_superuser,
+            'is_staff': user.is_staff,
+            'date_joined': user.date_joined,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        request=SuperuserProfileSerializer,
+        responses=SuperuserProfileResponseSerializer,
+        description="Update the logged-in superuser profile information.",
+    )
+    def put(self, request, *args, **kwargs):
+        user = self.get_superuser()
+        if user is None:
+            return Response({'detail': 'User is not a superuser.'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = SuperuserProfileSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        if 'last_name' in data:
+            user.last_name = data['last_name']
+        if 'email' in data:
+            user.email = data['email']
+            user.username = data['email']
+
+        user.save(update_fields=['first_name', 'last_name', 'email', 'username'])
+
+        response_data = {
+            'superuser': {
+                'id': user.id,
+                'email': user.email,
+                'username': user.username,
+                'is_superuser': user.is_superuser,
+                'is_staff': user.is_staff,
+                'date_joined': user.date_joined,
+            },
+            'message': 'Profile updated successfully',
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    def patch(self, request, *args, **kwargs):
+        return self.put(request, *args, **kwargs)
+
+
+@extend_schema(
+    request=SuperuserPasswordChangeSerializer,
+    responses=SuperuserPasswordChangeResponseSerializer,
+    description="Change the logged-in superuser password.",
+)
+class SuperuserPasswordChangeView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        if not user.is_superuser:
+            return Response({'detail': 'User is not a superuser.'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = SuperuserPasswordChangeSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        user.set_password(serializer.validated_data['new_password'])
+        user.save(update_fields=['password'])
+
+        return Response({'message': 'Password changed successfully'}, status=status.HTTP_200_OK)

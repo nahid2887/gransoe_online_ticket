@@ -107,3 +107,43 @@ class SuperuserAuthResponseSerializer(serializers.Serializer):
     access_token = serializers.CharField()
     refresh_token = serializers.CharField()
     message = serializers.CharField()
+
+
+class SuperuserProfileSerializer(serializers.Serializer):
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False)
+
+    def validate(self, data):
+        email = data.get('email')
+        user = self.context['request'].user
+        if email and User.objects.exclude(pk=user.pk).filter(email=email).exists():
+            raise serializers.ValidationError({'email': 'Email already in use.'})
+        return data
+
+
+class SuperuserProfileResponseSerializer(serializers.Serializer):
+    superuser = SuperuserDetailSerializer()
+    message = serializers.CharField()
+
+
+class SuperuserPasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, required=True)
+    new_password = serializers.CharField(write_only=True, min_length=8, required=True)
+    confirm_new_password = serializers.CharField(write_only=True, min_length=8, required=True)
+
+    def validate(self, data):
+        user = self.context['request'].user
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        confirm_new_password = data.get('confirm_new_password')
+
+        if not user.check_password(current_password):
+            raise serializers.ValidationError({'current_password': 'Current password is incorrect.'})
+        if new_password != confirm_new_password:
+            raise serializers.ValidationError({'confirm_new_password': 'Passwords do not match.'})
+        return data
+
+
+class SuperuserPasswordChangeResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()

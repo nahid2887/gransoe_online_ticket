@@ -15,6 +15,29 @@ from .serializers import (
 )
 
 
+def build_customer_tokens(user, customer):
+    refresh = RefreshToken.for_user(user)
+    refresh['email'] = user.email
+    refresh['username'] = user.username
+    refresh['full_name'] = customer.full_name
+    refresh['phone_number'] = customer.phone_number
+    refresh['gender'] = customer.gender
+    date_of_birth = customer.date_of_birth
+    created_at = customer.created_at
+    refresh['date_of_birth'] = date_of_birth.isoformat() if hasattr(date_of_birth, 'isoformat') else str(date_of_birth)
+    refresh['customer'] = {
+        'id': customer.id,
+        'full_name': customer.full_name,
+        'email': user.email,
+        'username': user.username,
+        'phone_number': customer.phone_number,
+        'gender': customer.gender,
+        'date_of_birth': refresh['date_of_birth'],
+        'created_at': created_at.isoformat() if hasattr(created_at, 'isoformat') else str(created_at),
+    }
+    return refresh, str(refresh.access_token), str(refresh)
+
+
 @extend_schema(
     request=CustomerRegistrationSerializer,
     responses=AuthResponseSerializer,
@@ -43,10 +66,8 @@ class CustomerRegistrationView(GenericAPIView):
             date_of_birth=date_of_birth
         )
 
-        # Generate tokens
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
+        # Generate tokens with customer details in the JWT claims
+        refresh, access_token, refresh_token = build_customer_tokens(user, customer)
 
         # Prepare response
         customer_data = CustomerDetailSerializer(customer).data
@@ -90,10 +111,8 @@ class CustomerLoginView(GenericAPIView):
         except Customer.DoesNotExist:
             return Response({'error': 'Customer profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Generate tokens
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
+        # Generate tokens with customer details in the JWT claims
+        refresh, access_token, refresh_token = build_customer_tokens(user, customer)
 
         # Prepare response
         customer_data = CustomerDetailSerializer(customer).data

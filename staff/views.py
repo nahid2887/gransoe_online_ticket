@@ -22,6 +22,22 @@ from .serializers import (
 )
 
 
+def build_staff_tokens(user, staff):
+    refresh = RefreshToken.for_user(user)
+    created_at = staff.created_at
+    refresh['email'] = user.email
+    refresh['username'] = user.username
+    refresh['staff'] = {
+        'id': staff.id,
+        'full_name': staff.full_name,
+        'email': user.email,
+        'username': user.username,
+        'phone_number': staff.phone_number,
+        'created_at': created_at.isoformat() if hasattr(created_at, 'isoformat') else str(created_at),
+    }
+    return refresh, str(refresh.access_token), str(refresh)
+
+
 @extend_schema(
     request=StaffRegistrationSerializer,
     responses=StaffAuthResponseSerializer,
@@ -41,9 +57,7 @@ class StaffRegistrationView(GenericAPIView):
             full_name=full_name,
             phone_number=phone_number
         )
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
+        refresh, access_token, refresh_token = build_staff_tokens(user, staff)
         staff_data = StaffDetailSerializer(staff).data
         response_data = {
             'staff': staff_data,
@@ -79,9 +93,7 @@ class StaffLoginView(GenericAPIView):
             staff = Staff.objects.get(user=user)
         except Staff.DoesNotExist:
             return Response({'error': 'Staff profile not found'}, status=status.HTTP_404_NOT_FOUND)
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
+        refresh, access_token, refresh_token = build_staff_tokens(user, staff)
         staff_data = StaffDetailSerializer(staff).data
         response_data = {
             'staff': staff_data,

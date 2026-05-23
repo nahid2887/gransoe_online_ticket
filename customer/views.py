@@ -440,7 +440,7 @@ class CustomerLoginView(GenericAPIView):
         try:
             customer = Customer.objects.get(user=user)
         except Customer.DoesNotExist:
-            return Response({'error': 'Customer profile not found'}, status=status.HTTP_404_NOT_FOUND)
+            raise serializers.ValidationError({'detail': 'Customer profile not found.'})
 
         # Generate tokens with customer details in the JWT claims
         refresh, access_token, refresh_token = build_customer_tokens(user, customer)

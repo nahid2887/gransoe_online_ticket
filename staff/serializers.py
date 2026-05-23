@@ -34,7 +34,7 @@ class StaffRegistrationSerializer(serializers.Serializer):
     def validate(self, data):
         if data['password'] != data['confirm_password']:
             raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
-        if User.objects.filter(email=data['email']).exists():
+        if User.objects.filter(email__iexact=data['email']).exists():
             raise serializers.ValidationError({'email': 'Email already registered.'})
         return data
 
@@ -42,8 +42,10 @@ class StaffRegistrationSerializer(serializers.Serializer):
         validated_data.pop('confirm_password')
         email = validated_data['email']
         password = validated_data['password']
-        user = User.objects.create_user(username=email, email=email, password=password)
-        return user
+        try:
+            return User.objects.create_user(username=email, email=email, password=password)
+        except Exception:
+            raise serializers.ValidationError({'email': 'Email already registered.'})
 
 
 class StaffLoginSerializer(serializers.Serializer):

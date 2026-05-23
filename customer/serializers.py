@@ -39,7 +39,7 @@ class CustomerRegistrationSerializer(serializers.Serializer):
             raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
         
         # Check if email already exists
-        if User.objects.filter(email=data['email']).exists():
+        if User.objects.filter(email__iexact=data['email']).exists():
             raise serializers.ValidationError({'email': 'Email already registered.'})
         
         return data
@@ -50,14 +50,14 @@ class CustomerRegistrationSerializer(serializers.Serializer):
         email = validated_data['email']
         password = validated_data['password']
         
-        # Create User
-        user = User.objects.create_user(
-            username=email,
-            email=email,
-            password=password
-        )
-        
-        return user
+        try:
+            return User.objects.create_user(
+                username=email,
+                email=email,
+                password=password
+            )
+        except Exception:
+            raise serializers.ValidationError({'email': 'Email already registered.'})
 
 
 class CustomerLoginSerializer(serializers.Serializer):

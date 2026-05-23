@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, serializers
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -239,7 +239,7 @@ class StaffLoginView(GenericAPIView):
         try:
             staff = Staff.objects.get(user=user)
         except Staff.DoesNotExist:
-            return Response({'error': 'Staff profile not found'}, status=status.HTTP_404_NOT_FOUND)
+            raise serializers.ValidationError({'detail': 'Staff profile not found.'})
         refresh, access_token, refresh_token = build_staff_tokens(user, staff)
         staff_data = StaffDetailSerializer(staff).data
         response_data = {

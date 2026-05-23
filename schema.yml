@@ -96,6 +96,48 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
           description: ''
+  /api/my-tickets/:
+    get:
+      operationId: my_tickets_retrieve
+      tags:
+      - my-tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+  /api/purchase/:
+    post:
+      operationId: purchase_create
+      description: Purchase tickets for an event. If Stripe is configured, returns
+        PaymentIntent client_secret; otherwise completes immediately.
+      tags:
+      - purchase
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
   /api/register/:
     post:
       operationId: register_create
@@ -275,7 +317,7 @@ paths:
       operationId: staff_events_list
       description: List all events
       tags:
-      - staff
+      - Staff Events
       security:
       - jwtAuth: []
       responses:
@@ -291,7 +333,7 @@ paths:
       operationId: staff_events_create
       description: Create a new event (superuser only)
       tags:
-      - staff
+      - Staff Events
       requestBody:
         content:
           application/json:
@@ -325,7 +367,7 @@ paths:
         description: A unique integer value identifying this event.
         required: true
       tags:
-      - staff
+      - Staff Events
       security:
       - jwtAuth: []
       responses:
@@ -346,7 +388,7 @@ paths:
         description: A unique integer value identifying this event.
         required: true
       tags:
-      - staff
+      - Staff Events
       requestBody:
         content:
           application/json:
@@ -379,7 +421,7 @@ paths:
         description: A unique integer value identifying this event.
         required: true
       tags:
-      - staff
+      - Staff Events
       requestBody:
         content:
           application/json:
@@ -411,7 +453,7 @@ paths:
         description: A unique integer value identifying this event.
         required: true
       tags:
-      - staff
+      - Staff Events
       security:
       - jwtAuth: []
       responses:
@@ -633,6 +675,73 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuperuserDetail'
           description: ''
+  /api/staff/upcoming-events/:
+    get:
+      operationId: staff_upcoming_events_list
+      description: List upcoming events for staff users.
+      tags:
+      - Staff Upcoming Events
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+          description: ''
+  /api/staff/upcoming-events/{id}/:
+    get:
+      operationId: staff_upcoming_events_retrieve
+      description: Retrieve a single upcoming event by ID for staff users.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this event.
+        required: true
+      tags:
+      - Staff Upcoming Events
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+  /api/staff/verify-ticket/:
+    post:
+      operationId: staff_verify_ticket_create
+      description: Verify a ticket for a given event by `tracking_number` or `qr_data`.
+        Marks ticket as verified once.
+      tags:
+      - Staff Events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffTicketVerify'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StaffTicketVerify'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StaffTicketVerify'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
   /api/token/refresh/:
     post:
       operationId: token_refresh_create
@@ -660,6 +769,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenRefresh'
           description: ''
+  /api/webhook/stripe:
+    post:
+      operationId: webhook_stripe_create
+      description: Stripe webhook endpoint (optional) to finalize orders on payment
+        success.
+      tags:
+      - webhook
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/webhook/stripe/:
+    post:
+      operationId: webhook_stripe_create_2
+      description: Stripe webhook endpoint (optional) to finalize orders on payment
+        success.
+      tags:
+      - webhook
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
 components:
   schemas:
     AuthResponse:
@@ -850,6 +985,66 @@ components:
         * `M` - Male
         * `F` - Female
         * `O` - Other
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+        event:
+          type: integer
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        platform_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        reservation_expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        stripe_payment_intent:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        tickets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket'
+          readOnly: true
+      required:
+      - created_at
+      - event
+      - id
+      - platform_fee
+      - quantity
+      - reservation_expires_at
+      - status
+      - stripe_payment_intent
+      - tickets
+      - total_amount
+      - user
     PatchedEvent:
       type: object
       properties:
@@ -926,6 +1121,17 @@ components:
         date_joined:
           type: string
           format: date-time
+    Purchase:
+      type: object
+      properties:
+        event_id:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+      required:
+      - event_id
+      - quantity
     StaffAuthResponse:
       type: object
       properties:
@@ -1009,6 +1215,27 @@ components:
       - full_name
       - password
       - phone_number
+    StaffTicketVerify:
+      type: object
+      properties:
+        event_id:
+          type: integer
+        tracking_number:
+          type: string
+        qr_data:
+          type: string
+      required:
+      - event_id
+    StatusEnum:
+      enum:
+      - pending
+      - completed
+      - failed
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `completed` - Completed
+        * `failed` - Failed
     SuperuserAuthResponse:
       type: object
       properties:
@@ -1108,6 +1335,49 @@ components:
       required:
       - message
       - superuser
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          format: uuid
+          readOnly: true
+        tracking_number:
+          type: string
+          maxLength: 64
+        qr_data:
+          type: string
+        qr_image:
+          type: string
+          readOnly: true
+        event:
+          type: integer
+        is_verified:
+          type: boolean
+          readOnly: true
+        verified_at:
+          type: string
+          format: date-time
+          readOnly: true
+        verified_by:
+          nullable: true
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - event
+      - id
+      - is_verified
+      - qr_image
+      - verified_at
+      - verified_by
     TicketTypeEnum:
       enum:
       - General Admission

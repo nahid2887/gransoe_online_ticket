@@ -182,3 +182,14 @@ class EventSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
+
+
+class StaffTicketVerifySerializer(serializers.Serializer):
+    event_id = serializers.IntegerField()
+    tracking_number = serializers.CharField(required=False, allow_blank=True)
+    qr_data = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, data):
+        if not data.get('tracking_number') and not data.get('qr_data'):
+            raise serializers.ValidationError('Provide either tracking_number or qr_data')
+        return data

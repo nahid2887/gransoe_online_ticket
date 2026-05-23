@@ -25,6 +25,11 @@ from .serializers import (
     SuperuserPasswordChangeResponseSerializer,
 )
 from .serializers import EventSerializer
+from staff.serializers import StaffTicketVerifySerializer
+from customer.serializers import TicketSerializer
+from customer.models import Ticket
+from rest_framework import serializers
+from drf_spectacular.utils import extend_schema
 
 from rest_framework.permissions import BasePermission
 
@@ -110,6 +115,56 @@ class StaffUpcomingEventViewSet(viewsets.ReadOnlyModelViewSet):
                 )
                 .order_by('date', 'time', '-created_at')
             )
+
+
+@extend_schema(
+    request=StaffTicketVerifySerializer,
+    responses={200: TicketSerializer},
+    description='Verify a ticket for a given event by `tracking_number` or `qr_data`. Marks ticket as verified once.',
+    tags=['Staff Events']
+)
+class StaffVerifyTicketView(GenericAPIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+    serializer_class = StaffTicketVerifySerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        event_id = serializer.validated_data['event_id']
+        tracking_number = serializer.validated_data.get('tracking_number')
+        qr_data = serializer.validated_data.get('qr_data')
+
+        tickets = Ticket.objects.filter(event_id=event_id)
+        ticket = None
+        if tracking_number:
+            ticket = tickets.filter(tracking_number=tracking_number).first()
+        if not ticket and qr_data:
+            ticket = tickets.filter(qr_data=qr_data).first()
+        if not ticket:
+            # try matching by code if qr_data contains UUID-like string
+            try:
+                import uuid
+                possible = uuid.UUID(qr_data)
+                ticket = tickets.filter(code=possible).first()
+            except Exception:
+                pass
+
+        if not ticket:
+            return Response({'detail': 'Ticket not found for that event'}, status=status.HTTP_404_NOT_FOUND)
+
+        if ticket.is_verified:
+            data = TicketSerializer(ticket, context={'request': request}).data
+            return Response({'message': 'Ticket already verified', 'ticket': data}, status=status.HTTP_200_OK)
+
+        # Mark verified
+        ticket.is_verified = True
+        from django.utils import timezone as djtz
+        ticket.verified_at = djtz.now()
+        ticket.verified_by = request.user
+        ticket.save(update_fields=['is_verified', 'verified_at', 'verified_by'])
+
+        data = TicketSerializer(ticket, context={'request': request}).data
+        return Response({'message': 'Ticket verified', 'ticket': data}, status=status.HTTP_200_OK)
 
 
 def build_staff_tokens(user, staff):

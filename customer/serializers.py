@@ -106,10 +106,13 @@ class PurchaseSerializer(serializers.Serializer):
 
 class TicketSerializer(serializers.ModelSerializer):
     qr_image = serializers.SerializerMethodField()
+    is_verified = serializers.BooleanField(read_only=True)
+    verified_at = serializers.DateTimeField(read_only=True)
+    verified_by = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = getattr(__import__('customer.models', fromlist=['Ticket']), 'Ticket')
-        fields = ('id', 'code', 'tracking_number', 'qr_data', 'qr_image', 'event', 'created_at')
+        fields = ('id', 'code', 'tracking_number', 'qr_data', 'qr_image', 'event', 'is_verified', 'verified_at', 'verified_by', 'created_at')
 
     def get_qr_image(self, obj):
         if not obj.qr_image:
@@ -120,6 +123,12 @@ class TicketSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.qr_image)
 
         return obj.qr_image
+
+    @extend_schema_field(serializers.JSONField(allow_null=True))
+    def get_verified_by(self, obj):
+        if not obj.verified_by:
+            return None
+        return {'id': obj.verified_by.id, 'email': obj.verified_by.email}
 
 
 class OrderSerializer(serializers.ModelSerializer):

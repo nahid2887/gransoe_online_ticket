@@ -31,6 +31,9 @@ class Ticket(models.Model):
     tracking_number = models.CharField(max_length=64, unique=True, blank=True)
     qr_data = models.TextField(blank=True)  # base64 PNG or raw data for client (legacy)
     qr_image = models.CharField(max_length=512, blank=True)  # path/URL to generated QR image
+    is_verified = models.BooleanField(default=False)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='verified_tickets')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -5,6 +5,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.generics import GenericAPIView
 from django.contrib.auth.models import User
+from django.db.models import Q
+from django.utils import timezone
+from django.db import transaction
 
 from .models import Staff
 from .models import Event
@@ -32,6 +35,14 @@ class IsSuperUserForWrite(BasePermission):
         if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
             return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
         return True
+
+
+class IsStaffUser(BasePermission):
+    def has_permission(self, request, view):
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return False
+        return bool(user.is_superuser or hasattr(user, 'staff'))
 
 
 @extend_schema_view(
@@ -63,6 +74,7 @@ class IsSuperUserForWrite(BasePermission):
         responses={204: None}
     )
 )
+@extend_schema(tags=['Staff Events'])
 class EventViewSet(viewsets.ModelViewSet):
     """Event endpoints: create/patch restricted to superusers."""
     queryset = Event.objects.all()
@@ -71,6 +83,33 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        description='List upcoming events for staff users.',
+        responses=EventSerializer(many=True),
+    ),
+    retrieve=extend_schema(
+        description='Retrieve a single upcoming event by ID for staff users.',
+        responses=EventSerializer,
+    ),
+)
+@extend_schema(tags=['Staff Upcoming Events'])
+class StaffUpcomingEventViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = EventSerializer
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
+    def get_queryset(self):
+        with transaction.atomic():
+            now = timezone.localtime()
+            today = timezone.localdate()
+            return (
+                Event.objects.filter(
+                    Q(date__gt=today) | Q(date=today, time__gte=now.time())
+                )
+                .order_by('date', 'time', '-created_at')
+            )
 
 
 def build_staff_tokens(user, staff):

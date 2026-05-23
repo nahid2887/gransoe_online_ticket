@@ -5,6 +5,7 @@ from .views import (
     StaffLoginView,
     StaffViewSet,
     EventViewSet,
+    StaffUpcomingEventViewSet,
     SuperuserLoginView,
     SuperuserProfileView,
     SuperuserPasswordChangeView,
@@ -13,6 +14,7 @@ from .views import (
 router = DefaultRouter()
 router.register(r'staffs', StaffViewSet, basename='staff')
 router.register(r'events', EventViewSet, basename='event')
+router.register(r'upcoming-events', StaffUpcomingEventViewSet, basename='staff-upcoming-event')
 
 app_name = 'staff'
 

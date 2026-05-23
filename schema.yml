@@ -1,0 +1,1192 @@
+openapi: 3.0.3
+info:
+  title: Customer API
+  version: 1.0.0
+  description: Customer Registration and Management API
+paths:
+  /api/customers/:
+    get:
+      operationId: customers_list
+      description: |-
+        ViewSet for retrieving customer details.
+        Requires JWT authentication.
+      tags:
+      - customers
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerDetail'
+          description: ''
+  /api/customers/{user__id}/:
+    get:
+      operationId: customers_retrieve
+      description: |-
+        ViewSet for retrieving customer details.
+        Requires JWT authentication.
+      parameters:
+      - in: path
+        name: user__id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - customers
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerDetail'
+          description: ''
+  /api/events/upcoming/:
+    get:
+      operationId: events_upcoming_list
+      description: List upcoming events that anyone can view.
+      tags:
+      - events
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UpcomingEvent'
+          description: ''
+  /api/login/:
+    post:
+      operationId: login_create
+      description: Login with email and password. Returns customer details, access
+        token, and refresh token in cookie.
+      tags:
+      - login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerLogin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomerLogin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomerLogin'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+  /api/register/:
+    post:
+      operationId: register_create
+      description: Register a new customer account with required details.
+      tags:
+      - register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRegistration'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomerRegistration'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomerRegistration'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+  /api/schema/:
+    get:
+      operationId: schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - af
+          - ar
+          - ar-dz
+          - ast
+          - az
+          - be
+          - bg
+          - bn
+          - br
+          - bs
+          - ca
+          - ckb
+          - cs
+          - cy
+          - da
+          - de
+          - dsb
+          - el
+          - en
+          - en-au
+          - en-gb
+          - eo
+          - es
+          - es-ar
+          - es-co
+          - es-mx
+          - es-ni
+          - es-ve
+          - et
+          - eu
+          - fa
+          - fi
+          - fr
+          - fy
+          - ga
+          - gd
+          - gl
+          - he
+          - hi
+          - hr
+          - hsb
+          - ht
+          - hu
+          - hy
+          - ia
+          - id
+          - ig
+          - io
+          - is
+          - it
+          - ja
+          - ka
+          - kab
+          - kk
+          - km
+          - kn
+          - ko
+          - ky
+          - lb
+          - lt
+          - lv
+          - mk
+          - ml
+          - mn
+          - mr
+          - ms
+          - my
+          - nb
+          - ne
+          - nl
+          - nn
+          - os
+          - pa
+          - pl
+          - pt
+          - pt-br
+          - ro
+          - ru
+          - sk
+          - sl
+          - sq
+          - sr
+          - sr-latn
+          - sv
+          - sw
+          - ta
+          - te
+          - tg
+          - th
+          - tk
+          - tr
+          - tt
+          - udm
+          - ug
+          - uk
+          - ur
+          - uz
+          - vi
+          - zh-hans
+          - zh-hant
+      tags:
+      - schema
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/staff/events/:
+    get:
+      operationId: staff_events_list
+      description: List all events
+      tags:
+      - staff
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+          description: ''
+    post:
+      operationId: staff_events_create
+      description: Create a new event (superuser only)
+      tags:
+      - staff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Event'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Event'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+  /api/staff/events/{id}/:
+    get:
+      operationId: staff_events_retrieve
+      description: Retrieve a single event by ID
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this event.
+        required: true
+      tags:
+      - staff
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+    put:
+      operationId: staff_events_update
+      description: Update an event (superuser only)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this event.
+        required: true
+      tags:
+      - staff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Event'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Event'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+    patch:
+      operationId: staff_events_partial_update
+      description: Partially update an event (superuser only)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this event.
+        required: true
+      tags:
+      - staff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEvent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEvent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEvent'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+    delete:
+      operationId: staff_events_destroy
+      description: Delete an event (superuser only)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this event.
+        required: true
+      tags:
+      - staff
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/staff/login/:
+    post:
+      operationId: staff_login_create
+      description: Staff login. Returns staff details and tokens.
+      tags:
+      - staff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffLogin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StaffLogin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StaffLogin'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffAuthResponse'
+          description: ''
+  /api/staff/register/:
+    post:
+      operationId: staff_register_create
+      description: Register a new staff member with required details.
+      tags:
+      - staff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffRegistration'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StaffRegistration'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StaffRegistration'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffAuthResponse'
+          description: ''
+  /api/staff/staffs/:
+    get:
+      operationId: staff_staffs_list
+      tags:
+      - staff
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StaffDetail'
+          description: ''
+  /api/staff/staffs/{id}/:
+    get:
+      operationId: staff_staffs_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this staff.
+        required: true
+      tags:
+      - staff
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffDetail'
+          description: ''
+  /api/staff/super/change-password/:
+    post:
+      operationId: staff_super_change_password_create
+      description: Change the logged-in superuser password.
+      tags:
+      - staff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuperuserPasswordChange'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SuperuserPasswordChange'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SuperuserPasswordChange'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuperuserPasswordChangeResponse'
+          description: ''
+  /api/staff/super/login/:
+    post:
+      operationId: staff_super_login_create
+      description: Superuser login using email and password. Returns user details
+        and tokens.
+      tags:
+      - staff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuperuserLogin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SuperuserLogin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SuperuserLogin'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuperuserAuthResponse'
+          description: ''
+  /api/staff/super/profile/:
+    get:
+      operationId: staff_super_profile_retrieve
+      description: Get the logged-in superuser profile.
+      tags:
+      - staff
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuperuserDetail'
+          description: ''
+    put:
+      operationId: staff_super_profile_update
+      description: Update the logged-in superuser profile information.
+      tags:
+      - staff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuperuserProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SuperuserProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SuperuserProfile'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuperuserProfileResponse'
+          description: ''
+    patch:
+      operationId: staff_super_profile_partial_update
+      description: Get the logged-in superuser profile.
+      tags:
+      - staff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSuperuserDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSuperuserDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSuperuserDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuperuserDetail'
+          description: ''
+  /api/token/refresh/:
+    post:
+      operationId: token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+components:
+  schemas:
+    AuthResponse:
+      type: object
+      description: Response serializer for authentication endpoints
+      properties:
+        customer:
+          $ref: '#/components/schemas/CustomerDetail'
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        message:
+          type: string
+      required:
+      - access_token
+      - customer
+      - message
+      - refresh_token
+    CustomerDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        phone_number:
+          type: string
+          maxLength: 20
+        gender:
+          $ref: '#/components/schemas/GenderEnum'
+        date_of_birth:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - date_of_birth
+      - email
+      - full_name
+      - gender
+      - id
+      - phone_number
+      - username
+    CustomerLogin:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address
+        password:
+          type: string
+          writeOnly: true
+          description: Password
+      required:
+      - email
+      - password
+    CustomerRegistration:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address for login
+        password:
+          type: string
+          writeOnly: true
+          description: Password minimum 8 characters
+          minLength: 8
+        confirm_password:
+          type: string
+          writeOnly: true
+          description: Confirm password
+          minLength: 8
+        full_name:
+          type: string
+          description: Customer full name
+          maxLength: 255
+        phone_number:
+          type: string
+          description: Phone number
+          maxLength: 20
+        gender:
+          allOf:
+          - $ref: '#/components/schemas/GenderEnum'
+          description: |-
+            Gender (M/F/O)
+
+            * `M` - Male
+            * `F` - Female
+            * `O` - Other
+        date_of_birth:
+          type: string
+          format: date
+          description: Date of birth (YYYY-MM-DD)
+      required:
+      - confirm_password
+      - date_of_birth
+      - email
+      - full_name
+      - gender
+      - password
+      - phone_number
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        venue:
+          type: string
+          maxLength: 255
+        age:
+          type: string
+          maxLength: 50
+        image:
+          type: string
+          maxLength: 512
+        date:
+          type: string
+          format: date
+          nullable: true
+        time:
+          type: string
+          format: time
+          nullable: true
+        ticket_type:
+          $ref: '#/components/schemas/TicketTypeEnum'
+        available_tickets:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        max_per_order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        price_per_ticket:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        platform_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        created_by:
+          nullable: true
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - id
+      - title
+      - updated_at
+    GenderEnum:
+      enum:
+      - M
+      - F
+      - O
+      type: string
+      description: |-
+        * `M` - Male
+        * `F` - Female
+        * `O` - Other
+    PatchedEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        venue:
+          type: string
+          maxLength: 255
+        age:
+          type: string
+          maxLength: 50
+        image:
+          type: string
+          maxLength: 512
+        date:
+          type: string
+          format: date
+          nullable: true
+        time:
+          type: string
+          format: time
+          nullable: true
+        ticket_type:
+          $ref: '#/components/schemas/TicketTypeEnum'
+        available_tickets:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        max_per_order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        price_per_ticket:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        platform_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        created_by:
+          nullable: true
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedSuperuserDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        is_superuser:
+          type: boolean
+        is_staff:
+          type: boolean
+        date_joined:
+          type: string
+          format: date-time
+    StaffAuthResponse:
+      type: object
+      properties:
+        staff:
+          $ref: '#/components/schemas/StaffDetail'
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        message:
+          type: string
+      required:
+      - access_token
+      - message
+      - refresh_token
+      - staff
+    StaffDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        phone_number:
+          type: string
+          maxLength: 20
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - email
+      - full_name
+      - id
+      - phone_number
+      - username
+    StaffLogin:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    StaffRegistration:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        confirm_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        full_name:
+          type: string
+          maxLength: 255
+        phone_number:
+          type: string
+          maxLength: 20
+      required:
+      - confirm_password
+      - email
+      - full_name
+      - password
+      - phone_number
+    SuperuserAuthResponse:
+      type: object
+      properties:
+        superuser:
+          $ref: '#/components/schemas/SuperuserDetail'
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        message:
+          type: string
+      required:
+      - access_token
+      - message
+      - refresh_token
+      - superuser
+    SuperuserDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        is_superuser:
+          type: boolean
+        is_staff:
+          type: boolean
+        date_joined:
+          type: string
+          format: date-time
+      required:
+      - date_joined
+      - email
+      - id
+      - is_staff
+      - is_superuser
+      - username
+    SuperuserLogin:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    SuperuserPasswordChange:
+      type: object
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        confirm_new_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+      required:
+      - confirm_new_password
+      - current_password
+      - new_password
+    SuperuserPasswordChangeResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+    SuperuserProfile:
+      type: object
+      properties:
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+    SuperuserProfileResponse:
+      type: object
+      properties:
+        superuser:
+          $ref: '#/components/schemas/SuperuserDetail'
+        message:
+          type: string
+      required:
+      - message
+      - superuser
+    TicketTypeEnum:
+      enum:
+      - General Admission
+      type: string
+      description: '* `General Admission` - General Admission'
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    UpcomingEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        venue:
+          type: string
+          maxLength: 255
+        age:
+          type: string
+          maxLength: 50
+        image:
+          type: string
+          maxLength: 512
+        date:
+          type: string
+          format: date
+          nullable: true
+        time:
+          type: string
+          format: time
+          nullable: true
+        ticket_type:
+          $ref: '#/components/schemas/TicketTypeEnum'
+        available_tickets:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        max_per_order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        price_per_ticket:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        platform_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - title
+      - updated_at
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

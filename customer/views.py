@@ -482,13 +482,13 @@ class CustomerViewSet(viewsets.ReadOnlyModelViewSet):
 
 @extend_schema(
     responses={
-        200: UpcomingEventSerializer,
+        200: UpcomingEventSerializer(many=True),
         404: inline_serializer(
             name='UpcomingEventNotFoundResponse',
             fields={'detail': serializers.CharField()},
         ),
     },
-    description='Return the next upcoming event that anyone can view.',
+    description='Return all upcoming events that anyone can view.',
 )
 class UpcomingEventListView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -501,16 +501,14 @@ class UpcomingEventListView(GenericAPIView):
         today = timezone.localdate()
         now = timezone.localtime().time()
 
-        event = Event.objects.filter(
+        events = Event.objects.filter(
             Q(date__gt=today) | Q(date=today, time__gte=now)
         ).order_by('date', 'time', '-created_at')
 
-        event = event.first()
-
-        if not event:
+        if not events.exists():
             return Response({'detail': 'No upcoming event found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = self.get_serializer(event)
+        serializer = self.get_serializer(events, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

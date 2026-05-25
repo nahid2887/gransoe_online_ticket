@@ -2,10 +2,12 @@ from rest_framework import status, viewsets, serializers
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.generics import GenericAPIView
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.db.models import Count
 from django.utils import timezone
 from django.db import transaction
 
@@ -82,9 +84,52 @@ class IsStaffUser(BasePermission):
 @extend_schema(tags=['Staff Events'])
 class EventViewSet(viewsets.ModelViewSet):
     """Event endpoints: create/patch restricted to superusers."""
-    queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [IsSuperUserForWrite]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
+
+    def get_queryset(self):
+        return Event.objects.annotate(tickets_sold=Count('tickets', distinct=True)).order_by('-created_at')
+
+    def _error_response(self, detail, *, errors=None, error=None, status_code=status.HTTP_400_BAD_REQUEST):
+        payload = {'detail': detail}
+        if errors is not None:
+            payload['errors'] = errors
+        if error is not None:
+            payload['error'] = error
+        return Response(payload, status=status_code)
+
+    def list(self, request, *args, **kwargs):
+        try:
+            return super().list(request, *args, **kwargs)
+        except serializers.ValidationError as exc:
+            return self._error_response(
+                'Unable to list events.',
+                errors=exc.detail,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as exc:
+            return self._error_response(
+                'An unexpected error occurred while listing events.',
+                error=str(exc),
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except serializers.ValidationError as exc:
+            return self._error_response(
+                'Unable to create event.',
+                errors=exc.detail,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as exc:
+            return self._error_response(
+                'An unexpected error occurred while creating the event.',
+                error=str(exc),
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

@@ -2,7 +2,7 @@ from rest_framework import status, viewsets, serializers
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework.generics import GenericAPIView
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -481,8 +481,14 @@ class CustomerViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @extend_schema(
-    responses=UpcomingEventSerializer(many=True),
-    description='List upcoming events that anyone can view.',
+    responses={
+        200: UpcomingEventSerializer,
+        404: inline_serializer(
+            name='UpcomingEventNotFoundResponse',
+            fields={'detail': serializers.CharField()},
+        ),
+    },
+    description='Return the next upcoming event that anyone can view.',
 )
 class UpcomingEventListView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -495,9 +501,46 @@ class UpcomingEventListView(GenericAPIView):
         today = timezone.localdate()
         now = timezone.localtime().time()
 
-        events = Event.objects.filter(
+        event = Event.objects.filter(
             Q(date__gt=today) | Q(date=today, time__gte=now)
         ).order_by('date', 'time', '-created_at')
 
-        serializer = self.get_serializer(events, many=True)
+        event = event.first()
+
+        if not event:
+            return Response({'detail': 'No upcoming event found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(event)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    responses={
+        200: UpcomingEventSerializer,
+        404: inline_serializer(
+            name='UpcomingEventDetailNotFoundResponse',
+            fields={'detail': serializers.CharField()},
+        ),
+    },
+    description='Return a single upcoming event by ID.',
+)
+class UpcomingEventDetailView(GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = UpcomingEventSerializer
+
+    def get(self, request, pk, *args, **kwargs):
+        with transaction.atomic():
+            _release_expired_pending_orders()
+
+        today = timezone.localdate()
+        now = timezone.localtime().time()
+
+        event = Event.objects.filter(
+            Q(pk=pk) & (Q(date__gt=today) | Q(date=today, time__gte=now))
+        ).first()
+
+        if not event:
+            return Response({'detail': 'Upcoming event not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(event)
         return Response(serializer.data, status=status.HTTP_200_OK)

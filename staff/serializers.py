@@ -154,13 +154,14 @@ class SuperuserPasswordChangeResponseSerializer(serializers.Serializer):
 
 class EventSerializer(serializers.ModelSerializer):
     created_by = serializers.SerializerMethodField(read_only=True)
+    tickets_sold = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Event
         fields = (
             'id', 'title', 'description', 'venue', 'age', 'image', 'date', 'time',
             'ticket_type', 'available_tickets', 'max_per_order', 'price_per_ticket', 'platform_fee',
-            'created_by', 'created_at', 'updated_at'
+            'tickets_sold', 'created_by', 'created_at', 'updated_at'
         )
         read_only_fields = ('created_at', 'updated_at', 'created_by')
 
@@ -169,6 +170,10 @@ class EventSerializer(serializers.ModelSerializer):
         if obj.created_by:
             return {'id': obj.created_by.id, 'email': obj.created_by.email}
         return None
+
+    @extend_schema_field(serializers.IntegerField())
+    def get_tickets_sold(self, obj):
+        return getattr(obj, 'tickets_sold', obj.tickets.count())
 
     def validate_ticket_type(self, value):
         # enforce that ticket_type is only the allowed choice

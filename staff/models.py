@@ -25,7 +25,7 @@ class Event(models.Model):
     description = models.TextField(blank=True)
     venue = models.CharField(max_length=255, blank=True)
     age = models.CharField(max_length=50, blank=True)
-    image = models.CharField(max_length=512, blank=True)
+    image = models.ImageField(upload_to='events/', blank=True)
     date = models.DateField(null=True, blank=True)
     time = models.TimeField(null=True, blank=True)
 

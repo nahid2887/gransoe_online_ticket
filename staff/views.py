@@ -6,8 +6,8 @@ from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.generics import GenericAPIView
 from django.contrib.auth.models import User
-from django.db.models import Q
-from django.db.models import Count
+from django.db.models import Q, Count, Sum
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from django.db import transaction
 
@@ -25,11 +25,12 @@ from .serializers import (
     SuperuserProfileResponseSerializer,
     SuperuserPasswordChangeSerializer,
     SuperuserPasswordChangeResponseSerializer,
+    SuperuserDashboardResponseSerializer,
 )
 from .serializers import EventSerializer
 from staff.serializers import StaffTicketVerifySerializer
 from customer.serializers import TicketSerializer
-from customer.models import Ticket
+from customer.models import Ticket, Order
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema
 
@@ -50,6 +51,11 @@ class IsStaffUser(BasePermission):
         if not user or not user.is_authenticated:
             return False
         return bool(user.is_superuser or hasattr(user, 'staff'))
+
+
+class IsSuperUser(BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
 
 
 @extend_schema_view(
@@ -308,6 +314,93 @@ class StaffLoginView(GenericAPIView):
 class StaffViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Staff.objects.all()
     serializer_class = StaffDetailSerializer
+
+
+def _add_months(source_date, months):
+    month_index = source_date.month - 1 + months
+    year = source_date.year + month_index // 12
+    month = month_index % 12 + 1
+    return source_date.replace(year=year, month=month, day=1)
+
+
+@extend_schema(
+    responses=SuperuserDashboardResponseSerializer,
+    description='Get the super admin dashboard summary, monthly revenue, and recent completed orders.',
+    tags=['Staff Dashboard'],
+)
+class SuperuserDashboardView(GenericAPIView):
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+    def get(self, request, *args, **kwargs):
+        today = timezone.localdate()
+        current_month = today.replace(day=1)
+
+        active_events_qs = Event.objects.filter(
+            Q(date__gt=today) | Q(date=today, time__gte=timezone.localtime().time())
+        )
+        completed_orders = Order.objects.filter(status='completed')
+
+        total_revenue = completed_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+        tickets_sold = Ticket.objects.filter(order__status='completed').count()
+        checked_in = Ticket.objects.filter(is_verified=True).count()
+
+        month_starts = [_add_months(current_month, offset) for offset in range(-7, 1)]
+        month_end = _add_months(current_month, 1)
+        revenue_rows = (
+            completed_orders
+            .filter(created_at__gte=month_starts[0], created_at__lt=month_end)
+            .annotate(month=TruncMonth('created_at'))
+            .values('month')
+            .annotate(revenue=Sum('total_amount'))
+            .order_by('month')
+        )
+
+        revenue_map = {}
+        for row in revenue_rows:
+            month_value = row['month']
+            month_key = month_value.strftime('%Y-%m')
+            revenue_map[month_key] = row['revenue'] or 0
+
+        monthly_revenue = [
+            {
+                'month': month_start.strftime('%b'),
+                'revenue': revenue_map.get(month_start.strftime('%Y-%m'), 0),
+            }
+            for month_start in month_starts
+        ]
+
+        recent_orders = []
+        for order in completed_orders.select_related('event', 'user').order_by('-created_at')[:5]:
+            customer = getattr(getattr(order.user, 'customer', None), 'full_name', '') or order.user.get_full_name() or order.user.username
+            event_image = ''
+            if order.event and order.event.image:
+                try:
+                    event_image = request.build_absolute_uri(order.event.image.url)
+                except Exception:
+                    event_image = order.event.image.url
+
+            recent_orders.append({
+                'order_id': f'ORD-{order.id}',
+                'event': order.event.title,
+                'event_image': event_image,
+                'customer': customer,
+                'quantity': order.quantity,
+                'amount': order.total_amount,
+                'payment_status': order.status,
+                'created_at': order.created_at,
+            })
+
+        response_data = {
+            'summary': {
+                'total_revenue': total_revenue,
+                'tickets_sold': tickets_sold,
+                'active_events': active_events_qs.count(),
+                'checked_in': checked_in,
+            },
+            'monthly_revenue': monthly_revenue,
+            'recent_orders': recent_orders,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 @extend_schema(

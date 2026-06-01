@@ -200,3 +200,32 @@ class StaffTicketVerifySerializer(serializers.Serializer):
         if not data.get('tracking_number') and not data.get('qr_data'):
             raise serializers.ValidationError('Provide either tracking_number or qr_data')
         return data
+
+
+class DashboardSummarySerializer(serializers.Serializer):
+    total_revenue = serializers.DecimalField(max_digits=12, decimal_places=2)
+    tickets_sold = serializers.IntegerField()
+    active_events = serializers.IntegerField()
+    checked_in = serializers.IntegerField()
+
+
+class DashboardMonthlyRevenueItemSerializer(serializers.Serializer):
+    month = serializers.CharField()
+    revenue = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+
+class DashboardRecentOrderSerializer(serializers.Serializer):
+    order_id = serializers.CharField()
+    event = serializers.CharField()
+    event_image = serializers.CharField()
+    customer = serializers.CharField()
+    quantity = serializers.IntegerField()
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    payment_status = serializers.CharField()
+    created_at = serializers.DateTimeField()
+
+
+class SuperuserDashboardResponseSerializer(serializers.Serializer):
+    summary = DashboardSummarySerializer()
+    monthly_revenue = DashboardMonthlyRevenueItemSerializer(many=True)
+    recent_orders = DashboardRecentOrderSerializer(many=True)

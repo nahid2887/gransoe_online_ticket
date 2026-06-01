@@ -268,9 +268,39 @@ class MyTicketsView(GenericAPIView):
     permission_classes = [IsAuthenticated, IsCustomer]
     serializer_class = TicketSerializer
 
+    def get_queryset(self):
+        return Ticket.objects.filter(order__user=self.request.user).select_related('event')
+
     def get(self, request, *args, **kwargs):
-        tickets = Ticket.objects.filter(order__user=request.user).select_related('event')
+        tickets = self.get_queryset()
         serializer = self.get_serializer(tickets, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    responses={
+        200: TicketSerializer,
+        404: inline_serializer(
+            name='MyTicketNotFoundResponse',
+            fields={'detail': serializers.CharField()},
+        ),
+    },
+    description='Return a single ticket owned by the authenticated customer.',
+)
+class MyTicketDetailView(GenericAPIView):
+    permission_classes = [IsAuthenticated, IsCustomer]
+    serializer_class = TicketSerializer
+
+    def get(self, request, pk, *args, **kwargs):
+        ticket = Ticket.objects.filter(
+            pk=pk,
+            order__user=request.user,
+        ).select_related('event').first()
+
+        if not ticket:
+            return Response({'detail': 'Ticket not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(ticket)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

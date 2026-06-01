@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CustomerRegistrationView, CustomerLoginView, CustomerViewSet, UpcomingEventListView, UpcomingEventDetailView, PurchaseView, MyTicketsView, StripeWebhookView
+from .views import CustomerRegistrationView, CustomerLoginView, CustomerViewSet, UpcomingEventListView, UpcomingEventDetailView, PurchaseView, MyTicketsView, MyTicketDetailView, StripeWebhookView
 
 router = DefaultRouter()
 router.register(r'customers', CustomerViewSet, basename='customer')
@@ -14,6 +14,7 @@ urlpatterns = [
     path('events/upcoming/<int:pk>/', UpcomingEventDetailView.as_view(), name='upcoming-event-detail'),
     path('purchase/', PurchaseView.as_view(), name='purchase'),
     path('my-tickets/', MyTicketsView.as_view(), name='my-tickets'),
+    path('my-tickets/<int:pk>/', MyTicketDetailView.as_view(), name='my-ticket-detail'),
     path('webhook/stripe', StripeWebhookView.as_view(), name='stripe-webhook-no-slash'),
     path('webhook/stripe/', StripeWebhookView.as_view(), name='stripe-webhook'),
     path('', include(router.urls)),

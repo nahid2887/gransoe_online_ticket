@@ -229,3 +229,12 @@ class SuperuserDashboardResponseSerializer(serializers.Serializer):
     summary = DashboardSummarySerializer()
     monthly_revenue = DashboardMonthlyRevenueItemSerializer(many=True)
     recent_orders = DashboardRecentOrderSerializer(many=True)
+
+
+class StaffUpdateResponseSerializer(serializers.Serializer):
+    staff = StaffDetailSerializer()
+    message = serializers.CharField()
+
+
+class StaffDeleteResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()

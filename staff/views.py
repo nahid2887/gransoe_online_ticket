@@ -26,6 +26,8 @@ from .serializers import (
     SuperuserPasswordChangeSerializer,
     SuperuserPasswordChangeResponseSerializer,
     SuperuserDashboardResponseSerializer,
+    StaffUpdateResponseSerializer,
+    StaffDeleteResponseSerializer,
 )
 from .serializers import EventSerializer
 from staff.serializers import StaffTicketVerifySerializer
@@ -323,16 +325,16 @@ class StaffLoginView(GenericAPIView):
     update=extend_schema(
         description='Update a staff member details including role (superuser only).',
         request=StaffDetailSerializer,
-        responses=StaffDetailSerializer,
+        responses=StaffUpdateResponseSerializer,
     ),
     partial_update=extend_schema(
         description='Partially update a staff member details including role (superuser only).',
         request=StaffDetailSerializer,
-        responses=StaffDetailSerializer,
+        responses=StaffUpdateResponseSerializer,
     ),
     destroy=extend_schema(
         description='Delete a staff member profile and their associated User account (superuser only).',
-        responses={204: None},
+        responses={200: StaffDeleteResponseSerializer},
     ),
 )
 @extend_schema(tags=['Staff Management'])
@@ -346,6 +348,28 @@ class StaffViewSet(
     queryset = Staff.objects.all()
     serializer_class = StaffDetailSerializer
     permission_classes = [IsAuthenticated, IsSuperUser]
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+
+        return Response({
+            'message': 'Staff profile updated successfully',
+            'staff': serializer.data
+        }, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({
+            'message': 'Staff deleted successfully'
+        }, status=status.HTTP_200_OK)
 
     def perform_destroy(self, instance):
         user = instance.user

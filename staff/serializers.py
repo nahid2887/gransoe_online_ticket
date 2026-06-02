@@ -12,7 +12,7 @@ class StaffDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Staff
-        fields = ('id', 'full_name', 'email', 'username', 'phone_number', 'created_at')
+        fields = ('id', 'full_name', 'email', 'username', 'phone_number', 'role', 'created_at')
 
     @extend_schema_field(serializers.CharField())
     def get_email(self, obj):

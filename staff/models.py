@@ -6,6 +6,7 @@ class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='staff')
     full_name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=20)
+    role = models.CharField(max_length=100, default='Check-in Staff')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

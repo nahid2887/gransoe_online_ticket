@@ -52,7 +52,7 @@ paths:
   /api/events/upcoming/:
     get:
       operationId: events_upcoming_list
-      description: List upcoming events that anyone can view.
+      description: Return all upcoming events that anyone can view.
       tags:
       - events
       security:
@@ -66,6 +66,34 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/UpcomingEvent'
+          description: ''
+  /api/events/upcoming/{id}/:
+    get:
+      operationId: events_upcoming_retrieve
+      description: Return a single upcoming event by ID.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - events
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpcomingEvent'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpcomingEventDetailNotFoundResponse'
           description: ''
   /api/login/:
     post:
@@ -109,6 +137,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Ticket'
+          description: ''
+  /api/my-tickets/{id}/:
+    get:
+      operationId: my_tickets_retrieve_2
+      description: Return a single ticket owned by the authenticated customer.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - my-tickets
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyTicketNotFoundResponse'
           description: ''
   /api/purchase/:
     post:
@@ -518,11 +573,11 @@ paths:
   /api/staff/staffs/:
     get:
       operationId: staff_staffs_list
+      description: List all staff members (superuser only).
       tags:
-      - staff
+      - Staff Management
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -535,6 +590,7 @@ paths:
   /api/staff/staffs/{id}/:
     get:
       operationId: staff_staffs_retrieve
+      description: Retrieve a single staff member by ID (superuser only).
       parameters:
       - in: path
         name: id
@@ -543,10 +599,9 @@ paths:
         description: A unique integer value identifying this staff.
         required: true
       tags:
-      - staff
+      - Staff Management
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -554,6 +609,90 @@ paths:
               schema:
                 $ref: '#/components/schemas/StaffDetail'
           description: ''
+    put:
+      operationId: staff_staffs_update
+      description: Update a staff member details including role (superuser only).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this staff.
+        required: true
+      tags:
+      - Staff Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StaffDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StaffDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffDetail'
+          description: ''
+    patch:
+      operationId: staff_staffs_partial_update
+      description: Partially update a staff member details including role (superuser
+        only).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this staff.
+        required: true
+      tags:
+      - Staff Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStaffDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStaffDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStaffDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffDetail'
+          description: ''
+    delete:
+      operationId: staff_staffs_destroy
+      description: Delete a staff member profile and their associated User account
+        (superuser only).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this staff.
+        required: true
+      tags:
+      - Staff Management
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/staff/super/change-password/:
     post:
       operationId: staff_super_change_password_create
@@ -580,6 +719,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuperuserPasswordChangeResponse'
+          description: ''
+  /api/staff/super/dashboard/:
+    get:
+      operationId: staff_super_dashboard_retrieve
+      description: Get the super admin dashboard summary, monthly revenue, and recent
+        completed orders.
+      tags:
+      - Staff Dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuperuserDashboardResponse'
           description: ''
   /api/staff/super/login/:
     post:
@@ -910,6 +1065,67 @@ components:
       - gender
       - password
       - phone_number
+    DashboardMonthlyRevenueItem:
+      type: object
+      properties:
+        month:
+          type: string
+        revenue:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      required:
+      - month
+      - revenue
+    DashboardRecentOrder:
+      type: object
+      properties:
+        order_id:
+          type: string
+        event:
+          type: string
+        event_image:
+          type: string
+        customer:
+          type: string
+        quantity:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        payment_status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - amount
+      - created_at
+      - customer
+      - event
+      - event_image
+      - order_id
+      - payment_status
+      - quantity
+    DashboardSummary:
+      type: object
+      properties:
+        total_revenue:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        tickets_sold:
+          type: integer
+        active_events:
+          type: integer
+        checked_in:
+          type: integer
+      required:
+      - active_events
+      - checked_in
+      - tickets_sold
+      - total_revenue
     Event:
       type: object
       properties:
@@ -929,7 +1145,7 @@ components:
           maxLength: 50
         image:
           type: string
-          maxLength: 512
+          format: uri
         date:
           type: string
           format: date
@@ -958,6 +1174,9 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        tickets_sold:
+          type: integer
+          readOnly: true
         created_by:
           nullable: true
           readOnly: true
@@ -973,6 +1192,7 @@ components:
       - created_at
       - created_by
       - id
+      - tickets_sold
       - title
       - updated_at
     GenderEnum:
@@ -985,6 +1205,13 @@ components:
         * `M` - Male
         * `F` - Female
         * `O` - Other
+    MyTicketNotFoundResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
     Order:
       type: object
       properties:
@@ -1064,7 +1291,7 @@ components:
           maxLength: 50
         image:
           type: string
-          maxLength: 512
+          format: uri
         date:
           type: string
           format: date
@@ -1093,6 +1320,9 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        tickets_sold:
+          type: integer
+          readOnly: true
         created_by:
           nullable: true
           readOnly: true
@@ -1101,6 +1331,31 @@ components:
           format: date-time
           readOnly: true
         updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedStaffDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        phone_number:
+          type: string
+          maxLength: 20
+        role:
+          type: string
+          maxLength: 100
+        created_at:
           type: string
           format: date-time
           readOnly: true
@@ -1166,6 +1421,9 @@ components:
         phone_number:
           type: string
           maxLength: 20
+        role:
+          type: string
+          maxLength: 100
         created_at:
           type: string
           format: date-time
@@ -1252,6 +1510,23 @@ components:
       - message
       - refresh_token
       - superuser
+    SuperuserDashboardResponse:
+      type: object
+      properties:
+        summary:
+          $ref: '#/components/schemas/DashboardSummary'
+        monthly_revenue:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardMonthlyRevenueItem'
+        recent_orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardRecentOrder'
+      required:
+      - monthly_revenue
+      - recent_orders
+      - summary
     SuperuserDetail:
       type: object
       properties:
@@ -1413,7 +1688,7 @@ components:
           maxLength: 50
         image:
           type: string
-          maxLength: 512
+          format: uri
         date:
           type: string
           format: date
@@ -1455,6 +1730,13 @@ components:
       - id
       - title
       - updated_at
+    UpcomingEventDetailNotFoundResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
   securitySchemes:
     jwtAuth:
       type: http

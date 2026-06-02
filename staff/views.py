@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets, serializers
+from rest_framework import status, viewsets, serializers, mixins
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -311,9 +311,45 @@ class StaffLoginView(GenericAPIView):
         return response
 
 
-class StaffViewSet(viewsets.ReadOnlyModelViewSet):
+@extend_schema_view(
+    list=extend_schema(
+        description='List all staff members (superuser only).',
+        responses=StaffDetailSerializer(many=True),
+    ),
+    retrieve=extend_schema(
+        description='Retrieve a single staff member by ID (superuser only).',
+        responses=StaffDetailSerializer,
+    ),
+    update=extend_schema(
+        description='Update a staff member details including role (superuser only).',
+        request=StaffDetailSerializer,
+        responses=StaffDetailSerializer,
+    ),
+    partial_update=extend_schema(
+        description='Partially update a staff member details including role (superuser only).',
+        request=StaffDetailSerializer,
+        responses=StaffDetailSerializer,
+    ),
+    destroy=extend_schema(
+        description='Delete a staff member profile and their associated User account (superuser only).',
+        responses={204: None},
+    ),
+)
+@extend_schema(tags=['Staff Management'])
+class StaffViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Staff.objects.all()
     serializer_class = StaffDetailSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+    def perform_destroy(self, instance):
+        user = instance.user
+        user.delete()
 
 
 def _add_months(source_date, months):

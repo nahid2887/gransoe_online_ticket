@@ -152,6 +152,21 @@ class SuperuserPasswordChangeResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
 
 
+class OwnProfileResponseSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    email = serializers.EmailField()
+    username = serializers.CharField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    is_superuser = serializers.BooleanField()
+    is_staff = serializers.BooleanField()
+    role = serializers.CharField()
+    profile_type = serializers.CharField()
+    date_joined = serializers.DateTimeField()
+    profile = serializers.JSONField(allow_null=True)
+    message = serializers.CharField()
+
+
 class EventSerializer(serializers.ModelSerializer):
     created_by = serializers.SerializerMethodField(read_only=True)
     tickets_sold = serializers.SerializerMethodField(read_only=True)

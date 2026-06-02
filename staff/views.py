@@ -28,11 +28,12 @@ from .serializers import (
     SuperuserDashboardResponseSerializer,
     StaffUpdateResponseSerializer,
     StaffDeleteResponseSerializer,
+    OwnProfileResponseSerializer,
 )
 from .serializers import EventSerializer
 from staff.serializers import StaffTicketVerifySerializer
 from customer.serializers import TicketSerializer
-from customer.models import Ticket, Order
+from customer.models import Ticket, Order, Customer
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema
 
@@ -604,3 +605,73 @@ class SuperuserPasswordChangeView(GenericAPIView):
         user.save(update_fields=['password'])
 
         return Response({'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    responses=OwnProfileResponseSerializer,
+    description='Get the authenticated user own profile details. Supports customer, staff, and superuser accounts.',
+    tags=['Staff Profile'],
+)
+class MyProfileView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        profile_type = 'admin'
+        role = 'admin'
+        profile = None
+
+        customer = Customer.objects.filter(user=user).first()
+        staff = Staff.objects.filter(user=user).first()
+
+        if customer:
+            profile_type = 'customer'
+            role = 'customer'
+            profile = {
+                'id': customer.id,
+                'full_name': customer.full_name,
+                'phone_number': customer.phone_number,
+                'gender': customer.gender,
+                'date_of_birth': customer.date_of_birth,
+                'created_at': customer.created_at,
+                'updated_at': customer.updated_at,
+            }
+        elif staff:
+            profile_type = 'staff'
+            role = getattr(staff, 'role', 'staff') or 'staff'
+            profile = {
+                'id': staff.id,
+                'full_name': staff.full_name,
+                'phone_number': staff.phone_number,
+                'role': role,
+                'created_at': staff.created_at,
+                'updated_at': staff.updated_at,
+            }
+        elif user.is_superuser:
+            profile_type = 'admin'
+            role = 'admin'
+            profile = {
+                'id': user.id,
+                'email': user.email,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'date_joined': user.date_joined,
+            }
+
+        response_data = {
+            'id': user.id,
+            'email': user.email,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_superuser': user.is_superuser,
+            'is_staff': user.is_staff,
+            'role': role,
+            'profile_type': profile_type,
+            'date_joined': user.date_joined,
+            'profile': profile,
+            'message': 'Profile fetched successfully',
+        }
+        return Response(response_data, status=status.HTTP_200_OK)

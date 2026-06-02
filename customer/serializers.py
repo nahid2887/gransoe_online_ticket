@@ -138,3 +138,16 @@ class OrderSerializer(serializers.ModelSerializer):
         model = getattr(__import__('customer.models', fromlist=['Order']), 'Order')
         fields = ('id', 'user', 'event', 'quantity', 'total_amount', 'platform_fee', 'status', 'reservation_expires_at', 'stripe_payment_intent', 'created_at', 'tickets')
         read_only_fields = ('user', 'total_amount', 'platform_fee', 'status', 'reservation_expires_at', 'stripe_payment_intent', 'created_at', 'tickets')
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="The refresh token to blacklist. If not provided, the API will attempt to read it from cookies."
+    )
+    all_devices = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text="Set to true to log out of all active devices/sessions (requires authentication)."
+    )

@@ -124,6 +124,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
           description: ''
+  /api/logout/:
+    post:
+      operationId: logout_create
+      description: Logout user. Can blacklist a specific refresh token or all outstanding
+        tokens for the user.
+      tags:
+      - logout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Logout'
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutSuccessResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutErrorResponse'
+          description: ''
   /api/my-tickets/:
     get:
       operationId: my_tickets_retrieve
@@ -542,6 +576,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/StaffAuthResponse'
           description: ''
+  /api/staff/me/:
+    get:
+      operationId: staff_me_retrieve
+      description: Get the authenticated user own profile details. Supports customer,
+        staff, and superuser accounts.
+      tags:
+      - Staff Profile
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnProfileResponse'
+          description: ''
   /api/staff/register/:
     post:
       operationId: staff_register_create
@@ -640,7 +690,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StaffDetail'
+                $ref: '#/components/schemas/StaffUpdateResponse'
           description: ''
     patch:
       operationId: staff_staffs_partial_update
@@ -673,7 +723,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StaffDetail'
+                $ref: '#/components/schemas/StaffUpdateResponse'
           description: ''
     delete:
       operationId: staff_staffs_destroy
@@ -691,8 +741,12 @@ paths:
       security:
       - jwtAuth: []
       responses:
-        '204':
-          description: No response body
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffDeleteResponse'
+          description: ''
   /api/staff/super/change-password/:
     post:
       operationId: staff_super_change_password_create
@@ -1205,6 +1259,32 @@ components:
         * `M` - Male
         * `F` - Female
         * `O` - Other
+    Logout:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+          description: The refresh token to blacklist. If not provided, the API will
+            attempt to read it from cookies.
+        all_devices:
+          type: boolean
+          default: false
+          description: Set to true to log out of all active devices/sessions (requires
+            authentication).
+    LogoutErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    LogoutSuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
     MyTicketNotFoundResponse:
       type: object
       properties:
@@ -1272,6 +1352,48 @@ components:
       - tickets
       - total_amount
       - user
+    OwnProfileResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        is_superuser:
+          type: boolean
+        is_staff:
+          type: boolean
+        role:
+          type: string
+        profile_type:
+          type: string
+        date_joined:
+          type: string
+          format: date-time
+        profile:
+          nullable: true
+        message:
+          type: string
+      required:
+      - date_joined
+      - email
+      - first_name
+      - id
+      - is_staff
+      - is_superuser
+      - last_name
+      - message
+      - profile
+      - profile_type
+      - role
+      - username
     PatchedEvent:
       type: object
       properties:
@@ -1403,6 +1525,13 @@ components:
       - message
       - refresh_token
       - staff
+    StaffDeleteResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
     StaffDetail:
       type: object
       properties:
@@ -1484,6 +1613,16 @@ components:
           type: string
       required:
       - event_id
+    StaffUpdateResponse:
+      type: object
+      properties:
+        staff:
+          $ref: '#/components/schemas/StaffDetail'
+        message:
+          type: string
+      required:
+      - message
+      - staff
     StatusEnum:
       enum:
       - pending

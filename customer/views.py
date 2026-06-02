@@ -16,10 +16,12 @@ from .serializers import (
     CustomerDetailSerializer,
     AuthResponseSerializer,
     UpcomingEventSerializer,
+    LogoutSerializer,
 )
 from staff.models import Event
 from .models import Order, Ticket
 from .serializers import PurchaseSerializer, OrderSerializer, TicketSerializer
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsCustomer
 from django.db import transaction
@@ -565,3 +567,68 @@ class UpcomingEventDetailView(GenericAPIView):
 
         serializer = self.get_serializer(event)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    request=LogoutSerializer,
+    responses={
+        200: inline_serializer(
+            name='LogoutSuccessResponse',
+            fields={'message': serializers.CharField()}
+        ),
+        400: inline_serializer(
+            name='LogoutErrorResponse',
+            fields={'detail': serializers.CharField()}
+        )
+    },
+    description="Logout user. Can blacklist a specific refresh token or all outstanding tokens for the user.",
+)
+class LogoutView(GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = LogoutSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        refresh_token = serializer.validated_data.get('refresh_token')
+        all_devices = serializer.validated_data.get('all_devices', False)
+        
+        # If refresh token not in request body, try reading from cookie
+        if not refresh_token:
+            refresh_token = request.COOKIES.get('refresh_token')
+            
+        success_message = "Logout successful"
+        
+        if all_devices:
+            if not request.user or not request.user.is_authenticated:
+                return Response(
+                    {"detail": "Authentication credentials are required to log out from all devices."},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            # Blacklist all outstanding tokens for the authenticated user
+            outstanding_tokens = OutstandingToken.objects.filter(user=request.user)
+            blacklisted_tokens = []
+            for token in outstanding_tokens:
+                if not BlacklistedToken.objects.filter(token=token).exists():
+                    blacklisted_tokens.append(BlacklistedToken(token=token))
+            
+            if blacklisted_tokens:
+                BlacklistedToken.objects.bulk_create(blacklisted_tokens)
+                
+            success_message = "Logged out from all devices successfully."
+        else:
+            # Single session logout (blacklist the provided/cookie refresh token)
+            if refresh_token:
+                try:
+                    token = RefreshToken(refresh_token)
+                    token.blacklist()
+                except Exception:
+                    # If token is already blacklisted or invalid, we still delete the cookie and return OK
+                    pass
+                
+        response = Response({"message": success_message}, status=status.HTTP_200_OK)
+        # Clear refresh token cookie
+        response.delete_cookie('refresh_token')
+        return response

@@ -3,8 +3,8 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
 from .models import Staff
-from .models import Event
-from customer.models import Order
+from .models import Event , Banner 
+from customer.models import Order 
 
 
 class StaffDetailSerializer(serializers.ModelSerializer):
@@ -265,3 +265,9 @@ class OrderSerializer(serializers.ModelSerializer):
             customer = getattr(getattr(obj.user, 'customer', None), 'full_name', '')
             return customer or obj.user.get_full_name() or obj.user.username
 
+
+
+class BannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Banner
+        fields = "__all__"

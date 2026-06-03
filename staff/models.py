@@ -46,3 +46,13 @@ class Event(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+class Banner(models.Model):
+    title = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='banners/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+    def __str__(self):
+        return self.title

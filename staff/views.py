@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets, serializers, mixins
+from rest_framework import status, viewsets, serializers, mixins ,generics
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from .models import Staff
-from .models import Event
+from .models import Event ,Banner
 from .serializers import (
     StaffRegistrationSerializer,
     StaffLoginSerializer,
@@ -30,13 +30,14 @@ from .serializers import (
     StaffDeleteResponseSerializer,
     OwnProfileResponseSerializer,
     OrderSerializer,
+    BannerSerializer,
 )
 from .serializers import EventSerializer
 from staff.serializers import StaffTicketVerifySerializer
 from customer.serializers import TicketSerializer
 from customer.models import Ticket, Order, Customer
 from rest_framework import serializers
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from rest_framework.permissions import BasePermission
 
@@ -694,3 +695,50 @@ class MyProfileView(GenericAPIView):
             'message': 'Profile fetched successfully',
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+@extend_schema(
+    tags=["Banner"],
+    summary="Get latest 5 banners",
+    responses={
+        200: BannerSerializer(many=True)
+    }
+)
+class LatestBannerListView(generics.ListAPIView):
+    serializer_class = BannerSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return Banner.objects.all()[:5]
+
+@extend_schema(
+    tags=["Banner"],
+    summary="created Banners",
+    request=BannerSerializer,
+    responses={
+        201: BannerSerializer,
+        400: None,
+        403: OpenApiResponse(description="permission denied "),
+    
+    }
+)
+class BannerCreateView(generics.CreateAPIView):
+    queryset = Banner.objects.all()
+    serializer_class = BannerSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+@extend_schema(
+    tags=["Banner"],
+    summary="Update or Delete Banner",
+    request=BannerSerializer,
+    responses={
+        200: BannerSerializer,
+        403: OpenApiResponse(description="Permission denied"),
+        404: OpenApiResponse(description="Banner not found")
+    }
+)
+class BannerUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Banner.objects.all()
+    serializer_class = BannerSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]

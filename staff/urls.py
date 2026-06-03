@@ -13,6 +13,9 @@ from .views import (
     SuperuserDashboardView,
     MyProfileView,
     SuperuserOdersView,
+     LatestBannerListView,
+    BannerCreateView,
+    BannerUpdateDeleteView,
 )
 
 router = DefaultRouter()
@@ -31,6 +34,9 @@ urlpatterns = [
     path('super/change-password/', SuperuserPasswordChangeView.as_view(), name='super-change-password'),
     path('super/dashboard/', SuperuserDashboardView.as_view(), name='super-dashboard'),
     path('superuser/orders/',SuperuserOdersView.as_view(),name='superuser-order-list'),
+    path('banners/', LatestBannerListView.as_view(), name='latest-banners'),
+    path('banners/create/', BannerCreateView.as_view(), name='banner-create'),
+    path('banners/<int:pk>/', BannerUpdateDeleteView.as_view(), name='banner-update-delete'),
     path('me/', MyProfileView.as_view(), name='my-profile'),
     path('', include(router.urls)),
 ]

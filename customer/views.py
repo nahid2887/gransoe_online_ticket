@@ -225,8 +225,8 @@ class PurchaseView(GenericAPIView):
                         automatic_payment_methods={'enabled': True},
                         line_items=line_items,
                         mode='payment',
-                        success_url=getattr(settings, 'STRIPE_CHECKOUT_SUCCESS_URL'),
-                        cancel_url=getattr(settings, 'STRIPE_CHECKOUT_CANCEL_URL'),
+                        success_url = f"{getattr(settings, 'STRIPE_CHECKOUT_SUCCESS_URL')}?order_id={order.id}",
+                        cancel_url = f"{getattr(settings, 'STRIPE_CHECKOUT_CANCEL_URL')}?order_id={order.id}",
                         metadata={'order_id': order.id},
                         payment_intent_data={'metadata': {'order_id': order.id}},
                     )
@@ -238,8 +238,8 @@ class PurchaseView(GenericAPIView):
                             payment_method_types=['card', 'amazon_pay', 'klarna', 'affirm', 'link', 'bancontact', 'blik', 'eps'],
                             line_items=line_items,
                             mode='payment',
-                            success_url=getattr(settings, 'STRIPE_CHECKOUT_SUCCESS_URL'),
-                            cancel_url=getattr(settings, 'STRIPE_CHECKOUT_CANCEL_URL'),
+                            success_url = f"{getattr(settings, 'STRIPE_CHECKOUT_SUCCESS_URL')}?order_id={order.id}",
+                            cancel_url = f"{getattr(settings, 'STRIPE_CHECKOUT_CANCEL_URL')}?order_id={order.id}",
                             metadata={'order_id': order.id},
                             payment_intent_data={'metadata': {'order_id': order.id}},
                         )

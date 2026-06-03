@@ -4,7 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView ,ListAPIView
 from django.contrib.auth.models import User
 from django.db.models import Q, Count, Sum
 from django.db.models.functions import TruncMonth
@@ -29,6 +29,7 @@ from .serializers import (
     StaffUpdateResponseSerializer,
     StaffDeleteResponseSerializer,
     OwnProfileResponseSerializer,
+    OrderSerializer,
 )
 from .serializers import EventSerializer
 from staff.serializers import StaffTicketVerifySerializer
@@ -469,6 +470,24 @@ class SuperuserDashboardView(GenericAPIView):
     responses=SuperuserAuthResponseSerializer,
     description="Superuser login using email and password. Returns user details and tokens.",
 )
+
+class SuperuserOdersView(ListAPIView):
+    permission_classes = [IsAuthenticated, IsSuperUser]
+    serializer_class = OrderSerializer
+    
+    @extend_schema(
+        tags=["Superuser"],
+        summary="Order List",
+        description="Retrieve all orders.",
+        responses={200: OrderSerializer(many=True)},
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Order.objects.filter(status='completed').select_related('user', 'event').order_by('-created_at')
+
+
 class SuperuserLoginView(GenericAPIView):
     serializer_class = SuperuserLoginSerializer
 

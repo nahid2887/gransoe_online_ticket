@@ -4,6 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
 from .models import Staff
 from .models import Event
+from customer.models import Order
 
 
 class StaffDetailSerializer(serializers.ModelSerializer):
@@ -253,3 +254,14 @@ class StaffUpdateResponseSerializer(serializers.Serializer):
 
 class StaffDeleteResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ('id', 'user', 'event', 'quantity', 'total_amount', 'platform_fee', 'status', 'reservation_expires_at', 'stripe_payment_intent', 'created_at')
+
+        def get_customer(self, obj):
+            customer = getattr(getattr(obj.user, 'customer', None), 'full_name', '')
+            return customer or obj.user.get_full_name() or obj.user.username
+

@@ -12,6 +12,7 @@ from .views import (
     SuperuserPasswordChangeView,
     SuperuserDashboardView,
     MyProfileView,
+    SuperuserOdersView,
 )
 
 router = DefaultRouter()
@@ -29,6 +30,7 @@ urlpatterns = [
     path('super/profile/', SuperuserProfileView.as_view(), name='super-profile'),
     path('super/change-password/', SuperuserPasswordChangeView.as_view(), name='super-change-password'),
     path('super/dashboard/', SuperuserDashboardView.as_view(), name='super-dashboard'),
+    path('superuser/orders/',SuperuserOdersView.as_view(),name='superuser-order-list'),
     path('me/', MyProfileView.as_view(), name='my-profile'),
     path('', include(router.urls)),
 ]

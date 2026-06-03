@@ -11,8 +11,8 @@ from .views import (
     MyTicketDetailView,
     StripeWebhookView,
     LogoutView,
-    
-
+    OrderListView,
+    OrderDetailView,
 )
 
 router = DefaultRouter()
@@ -31,5 +31,7 @@ urlpatterns = [
     path('my-tickets/<int:pk>/', MyTicketDetailView.as_view(), name='my-ticket-detail'),
     path('webhook/stripe', StripeWebhookView.as_view(), name='stripe-webhook-no-slash'),
     path('webhook/stripe/', StripeWebhookView.as_view(), name='stripe-webhook'),
+    path('orders/', OrderListView.as_view(), name='order-list'),
+    path('orders/<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
     path('', include(router.urls)),
 ]

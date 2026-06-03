@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView ,ListAPIView, RetrieveAPIView
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models import Q
@@ -583,6 +583,7 @@ class UpcomingEventDetailView(GenericAPIView):
     },
     description="Logout user. Can blacklist a specific refresh token or all outstanding tokens for the user.",
 )
+
 class LogoutView(GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = LogoutSerializer
@@ -632,3 +633,28 @@ class LogoutView(GenericAPIView):
         # Clear refresh token cookie
         response.delete_cookie('refresh_token')
         return response
+
+
+
+@extend_schema(
+    summary="Order List",
+    description="Get all orders of the logged-in user"
+)
+class OrderListView(ListAPIView):
+    permission_classes = [IsAuthenticated, IsCustomer]
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+
+
+@extend_schema(
+    summary="Order Detail",
+    description="Get single order by ID (only if belongs to user)"
+)
+class OrderDetailView(RetrieveAPIView):
+    permission_classes = [IsAuthenticated, IsCustomer]
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)

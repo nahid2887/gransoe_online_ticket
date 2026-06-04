@@ -4,7 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
 from .models import Staff
 from .models import Event , Banner 
-from customer.models import Order 
+from customer.models import Order , Customer
 
 
 class StaffDetailSerializer(serializers.ModelSerializer):
@@ -255,15 +255,71 @@ class StaffUpdateResponseSerializer(serializers.Serializer):
 class StaffDeleteResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
 
+class eventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = '__all__'
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email')
+
+
+class CustomerSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+
+    class Meta:
+        model = Customer
+        fields = (
+            'user_id',
+            'username',
+            'email',
+            'full_name',
+            'phone_number',
+            'gender',
+            'date_of_birth',
+        )
 class OrderSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    customer = serializers.SerializerMethodField()
+
     class Meta:
         model = Order
-        fields = ('id', 'user', 'event', 'quantity', 'total_amount', 'platform_fee', 'status', 'reservation_expires_at', 'stripe_payment_intent', 'created_at')
+        fields = (
+            'id',
+            'user',        # ✅ MUST include this
+            'customer',
+            'event',
+            'quantity',
+            'total_amount',
+            'platform_fee',
+            'status',
+            'reservation_expires_at',
+            'stripe_payment_intent',
+            'created_at',
+        )
 
-        def get_customer(self, obj):
-            customer = getattr(getattr(obj.user, 'customer', None), 'full_name', '')
-            return customer or obj.user.get_full_name() or obj.user.username
+    def get_customer(self, obj):
+        customer = getattr(obj.user, 'customer', None)
+
+        if customer:
+            return {
+                "full_name": customer.full_name,
+                "phone_number": customer.phone_number,
+                "gender": customer.gender,
+                "date_of_birth": customer.date_of_birth,
+                "email": obj.user.email,
+                "username": obj.user.username,
+            }
+
+        return {
+            "full_name": obj.user.get_full_name() or obj.user.username,
+            "email": obj.user.email,
+            "username": obj.user.username,
+        }
 
 
 

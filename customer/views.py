@@ -2,7 +2,7 @@ from rest_framework import status, viewsets, serializers
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
 from rest_framework.generics import GenericAPIView ,ListAPIView, RetrieveAPIView
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -533,10 +533,28 @@ class CustomerViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @extend_schema(
-    responses={
-        200: UpcomingEventSerializer(many=True),
-    },
-    description='Return all upcoming events that anyone can view.',
+    parameters=[
+        OpenApiParameter(
+            name='venue',
+            type=str,
+            location=OpenApiParameter.QUERY,
+            description='Filter by venue'
+        ),
+        OpenApiParameter(
+            name='date',
+            type=str,
+            location=OpenApiParameter.QUERY,
+            description='Filter by date (YYYY-MM-DD)'
+        ),
+        OpenApiParameter(
+            name='search',
+            type=str,
+            location=OpenApiParameter.QUERY,
+            description='Search by title or venue'
+        ),
+    ],
+    responses={200: UpcomingEventSerializer(many=True)},
+    description='Return upcoming events with optional filters.',
 )
 class UpcomingEventListView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -550,8 +568,29 @@ class UpcomingEventListView(GenericAPIView):
         now = timezone.localtime().time()
 
         events = Event.objects.filter(
-            Q(date__gt=today) | Q(date=today, time__gte=now)
-        ).order_by('date', 'time', '-created_at')
+            Q(date__gt=today) |
+            Q(date=today, time__gte=now)
+        )
+
+        # Filter by venue
+        venue = request.query_params.get('venue')
+        if venue:
+            events = events.filter(venue__icontains=venue)
+
+        # Filter by date
+        date = request.query_params.get('date')
+        if date:
+            events = events.filter(date=date)
+
+        # Search by title and venue
+        search = request.query_params.get('search')
+        if search:
+            events = events.filter(
+                Q(title__icontains=search) |
+                Q(venue__icontains=search)
+            )
+
+        events = events.order_by('date', 'time', '-created_at')
 
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

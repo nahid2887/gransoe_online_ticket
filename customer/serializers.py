@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
-from .models import Customer
+from .models import Customer, Order, Ticket
 from datetime import date
 from staff.models import Event
 
@@ -130,14 +130,59 @@ class TicketSerializer(serializers.ModelSerializer):
             return None
         return {'id': obj.verified_by.id, 'email': obj.verified_by.email}
 
+class CustomerSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = Customer
+        fields = (
+            'id',
+            'full_name',
+            'phone_number',
+            'gender',
+            'date_of_birth',
+            'email',
+            'username',
+        )
+
+class EventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = '__all__'
+
 
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=True)
+    customer = serializers.SerializerMethodField()
+    event = EventSerializer(read_only=True)
 
     class Meta:
-        model = getattr(__import__('customer.models', fromlist=['Order']), 'Order')
-        fields = ('id', 'user', 'event', 'quantity', 'total_amount', 'platform_fee', 'status', 'reservation_expires_at', 'stripe_payment_intent', 'created_at', 'tickets')
-        read_only_fields = ('user', 'total_amount', 'platform_fee', 'status', 'reservation_expires_at', 'stripe_payment_intent', 'created_at', 'tickets')
+        model = Order
+        fields = (
+            'id',
+            'customer',
+            'event',
+            'quantity',
+            'total_amount',
+            'platform_fee',
+            'status',
+            'reservation_expires_at',
+            'stripe_payment_intent',
+            'created_at',
+            'tickets',
+        )
+
+    def get_customer(self, obj):
+        try:
+            customer = obj.user.customer
+            return CustomerSerializer(customer).data
+        except Customer.DoesNotExist:
+            return {
+                "id": obj.user.id,
+                "username": obj.user.username,
+                "email": obj.user.email,
+            }
 
 
 class LogoutSerializer(serializers.Serializer):

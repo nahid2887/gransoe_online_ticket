@@ -227,8 +227,18 @@ class PurchaseView(GenericAPIView):
                         mode='payment',
                         success_url = f"{getattr(settings, 'STRIPE_CHECKOUT_SUCCESS_URL')}?order_id={order.id}",
                         cancel_url = f"{getattr(settings, 'STRIPE_CHECKOUT_CANCEL_URL')}?order_id={order.id}",
-                        metadata={'order_id': order.id},
-                        payment_intent_data={'metadata': {'order_id': order.id}},
+                         customer_email=request.user.email,
+                        metadata={'order_id': order.id,
+                                  'user_id': request.user.id,
+                                   'user_name': request.user.get_full_name() ,
+                                   'user_email': request.user.email,},
+                        payment_intent_data={
+                                    'metadata': {
+                                       'order_id': order.id,
+                                        'user_id': request.user.id,
+                                        'user_email': request.user.email,
+                                         }
+                      },
                     )
                 except stripe.error.InvalidRequestError as e:
                     err_text = str(e)
@@ -240,8 +250,18 @@ class PurchaseView(GenericAPIView):
                             mode='payment',
                             success_url = f"{getattr(settings, 'STRIPE_CHECKOUT_SUCCESS_URL')}?order_id={order.id}",
                             cancel_url = f"{getattr(settings, 'STRIPE_CHECKOUT_CANCEL_URL')}?order_id={order.id}",
-                            metadata={'order_id': order.id},
-                            payment_intent_data={'metadata': {'order_id': order.id}},
+                            customer_email=request.user.email,
+                            metadata={'order_id': order.id,
+                                  'user_id': request.user.id,
+                                   'user_name': request.user.get_full_name() ,
+                                   'user_email': request.user.email,},
+                             payment_intent_data={
+                                    'metadata': {
+                                       'order_id': order.id,
+                                        'user_id': request.user.id,
+                                        'user_email': request.user.email,
+                                         }
+                      },
                         )
                     else:
                         raise

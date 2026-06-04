@@ -16,6 +16,9 @@ from .views import (
      LatestBannerListView,
     BannerCreateView,
     BannerUpdateDeleteView,
+    SingerListView,
+    SingerCreateView,
+    SingerUpdateDeleteView,
 )
 
 router = DefaultRouter()
@@ -37,6 +40,9 @@ urlpatterns = [
     path('banners/', LatestBannerListView.as_view(), name='latest-banners'),
     path('banners/create/', BannerCreateView.as_view(), name='banner-create'),
     path('banners/<int:pk>/', BannerUpdateDeleteView.as_view(), name='banner-update-delete'),
+    path('singers/', SingerListView.as_view(), name='singer-list'),
+    path('singers/create/', SingerCreateView.as_view(), name='singer-create'),
+    path('singers/<int:pk>/', SingerUpdateDeleteView.as_view(), name='singer-update-delete'),
     path('me/', MyProfileView.as_view(), name='my-profile'),
     path('', include(router.urls)),
 ]

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
 from .models import Staff
-from .models import Event , Banner 
+from .models import Event , Banner ,Singer
 from customer.models import Order , Customer
 
 
@@ -327,3 +327,9 @@ class BannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Banner
         fields = "__all__"
+
+
+class SingerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Singer
+        fields = '__all__'

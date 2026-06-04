@@ -56,3 +56,17 @@ class Banner(models.Model):
         ordering = ['-created_at']
     def __str__(self):
         return self.title
+
+
+
+
+class Singer(models.Model):
+    name = models.CharField(max_length=255)
+    location = models.CharField(max_length=255)
+    bio = models.TextField()
+    image = models.ImageField(upload_to='singers/')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name

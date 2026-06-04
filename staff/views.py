@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from .models import Staff
-from .models import Event ,Banner
+from .models import Event , Banner , Singer
 from .serializers import (
     StaffRegistrationSerializer,
     StaffLoginSerializer,
@@ -31,6 +31,7 @@ from .serializers import (
     OwnProfileResponseSerializer,
     OrderSerializer,
     BannerSerializer,
+    SingerSerializer
 )
 from .serializers import EventSerializer
 from staff.serializers import StaffTicketVerifySerializer
@@ -741,4 +742,54 @@ class BannerCreateView(generics.CreateAPIView):
 class BannerUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Banner.objects.all()
     serializer_class = BannerSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+
+@extend_schema(
+    tags=["Singer"],
+    summary="Get singers",
+    responses={
+        200: SingerSerializer(many=True)
+    }
+)
+
+class SingerListView(generics.ListAPIView):
+    serializer_class = SingerSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return Singer.objects.all()
+
+@extend_schema(
+    tags=["Singer"],
+    summary="created Singers",
+    request=SingerSerializer,
+    responses={
+        201: SingerSerializer,
+        400: None,
+        403: OpenApiResponse(description="permission denied "),
+    
+    }
+)
+
+class SingerCreateView(generics.CreateAPIView):
+    queryset = Singer.objects.all()
+    serializer_class = SingerSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser] 
+
+
+@extend_schema(
+    tags=["Singer"],
+    summary="Update or Delete Singer",
+    request=SingerSerializer,
+    responses={
+        200: SingerSerializer,
+        403: OpenApiResponse(description="Permission denied"),
+        404: OpenApiResponse(description="Singer not found")
+    }
+)
+
+class SingerUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Singer.objects.all()
+    serializer_class = SingerSerializer
     permission_classes = [IsAuthenticated, IsSuperUser]

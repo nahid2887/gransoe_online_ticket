@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from .models import Staff
-from .models import Event , Banner , Singer , AboutUs , PrivecyPolicy
+from .models import Event , Banner , Singer , AboutUs , PrivecyPolicy , TremsAndCondition
 from .serializers import (
     StaffRegistrationSerializer,
     StaffLoginSerializer,
@@ -34,6 +34,7 @@ from .serializers import (
     SingerSerializer ,
     AboutUsSerializer,
     PrivecyPolicySerializer,
+    TremsAndConditionSerializer
 )
 from .serializers import EventSerializer
 from staff.serializers import StaffTicketVerifySerializer
@@ -891,4 +892,52 @@ class PrivacyPolicyCreateView(generics.CreateAPIView):
 class PrivacyPolicyUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = PrivecyPolicy.objects.all()
     serializer_class = PrivecyPolicySerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+@extend_schema(
+    tags=["TermsAndConditions"],
+    summary="Get Terms and Conditions content",
+    responses={
+        200: TremsAndConditionSerializer(many=True)
+    }
+)
+class TremsAndConditionListView(generics.ListAPIView):
+    serializer_class = TremsAndConditionSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return TremsAndCondition.objects.all()[:1]
+
+
+@extend_schema(
+    tags=["TermsAndConditions"],
+    summary="Create Terms and Conditions content",
+    request=TremsAndConditionSerializer,
+    responses={
+        201: TremsAndConditionSerializer,
+        400: None,
+        403: OpenApiResponse(description="permission denied "),
+    
+    }
+)
+
+class TremsAndConditionCreateView(generics.CreateAPIView):
+    queryset = TremsAndCondition.objects.all()
+    serializer_class = TremsAndConditionSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+
+@extend_schema(
+    tags=["TermsAndConditions"],
+    summary="Update or Delete Terms and Conditions content",
+    request=TremsAndConditionSerializer,
+    responses={
+        200: TremsAndConditionSerializer,
+        403: OpenApiResponse(description="Permission denied"),
+        404: OpenApiResponse(description="Content not found")
+    }
+)
+class TremsAndConditionUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = TremsAndCondition.objects.all()
+    serializer_class = TremsAndConditionSerializer
     permission_classes = [IsAuthenticated, IsSuperUser]

@@ -4,7 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema_field
 from .models import Staff
 from .models import Event , Banner ,Singer 
-from .models import AboutUs , PrivecyPolicy
+from .models import AboutUs , PrivecyPolicy , TremsAndCondition
 from customer.models import Order , Customer 
 
 
@@ -345,4 +345,9 @@ class AboutUsSerializer(serializers.ModelSerializer):
 class PrivecyPolicySerializer(serializers.ModelSerializer):
     class Meta:
         model = PrivecyPolicy
+        fields = '__all__'
+
+class TremsAndConditionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TremsAndCondition
         fields = '__all__'

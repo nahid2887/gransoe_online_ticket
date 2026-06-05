@@ -25,6 +25,10 @@ from .views import (
     PrivacyPolicyListView,
     PrivacyPolicyCreateView,
     PrivacyPolicyUpdateDeleteView,
+    TremsAndConditionListView,
+    TremsAndConditionCreateView,
+    TremsAndConditionUpdateDeleteView,
+
 )
 
 router = DefaultRouter()
@@ -55,6 +59,9 @@ urlpatterns = [
     path('privacy-policy/', PrivacyPolicyListView.as_view(), name='privacy-policy-list'),
     path('privacy-policy/create/', PrivacyPolicyCreateView.as_view(), name='privacy-policy-create'),
     path('privacy-policy/<int:pk>/', PrivacyPolicyUpdateDeleteView.as_view(), name='privacy-policy-update-delete'),
+    path('terms-and-conditions/', TremsAndConditionListView.as_view(), name='terms-and-conditions-list'),
+    path('terms-and-conditions/create/', TremsAndConditionCreateView.as_view(), name='terms-and-conditions-create'),
+    path('terms-and-conditions/<int:pk>/', TremsAndConditionUpdateDeleteView.as_view(), name='terms-and-conditions-update-delete'),
     path('me/', MyProfileView.as_view(), name='my-profile'),
     path('', include(router.urls)),
 ]

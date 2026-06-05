@@ -93,4 +93,15 @@ class PrivecyPolicy(models.Model):
     def __str__(self):
         return f"Privacy Policy - {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
 
-        
+
+
+class TremsAndCondition(models.Model):
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Terms and Conditions - {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+

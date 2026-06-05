@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from .models import Staff
-from .models import Event , Banner , Singer , AboutUs
+from .models import Event , Banner , Singer , AboutUs , PrivecyPolicy
 from .serializers import (
     StaffRegistrationSerializer,
     StaffLoginSerializer,
@@ -33,6 +33,7 @@ from .serializers import (
     BannerSerializer,
     SingerSerializer ,
     AboutUsSerializer,
+    PrivecyPolicySerializer,
 )
 from .serializers import EventSerializer
 from staff.serializers import StaffTicketVerifySerializer
@@ -839,4 +840,55 @@ class AboutUsCreateView(generics.CreateAPIView):
 class AboutUsUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = AboutUs.objects.all()
     serializer_class = AboutUsSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+
+
+@extend_schema(
+    tags=["PrivacyPolicy"],
+    summary="Get Privacy Policy content",
+    responses={
+        200: PrivecyPolicySerializer(many=True)
+    }
+)
+
+class PrivacyPolicyListView(generics.ListAPIView):
+    serializer_class = PrivecyPolicySerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return PrivecyPolicy.objects.all()[:1]
+
+@extend_schema(
+    tags=["PrivacyPolicy"],
+    summary="Create Privacy Policy content",
+    request=PrivecyPolicySerializer,
+    responses={
+        201: PrivecyPolicySerializer,
+        400: None,
+        403: OpenApiResponse(description="permission denied "),
+    
+    }
+)
+
+class PrivacyPolicyCreateView(generics.CreateAPIView):
+    queryset = PrivecyPolicy.objects.all()
+    serializer_class = PrivecyPolicySerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+
+@extend_schema(
+    tags=["PrivacyPolicy"],
+    summary="Update or Delete Privacy Policy content",
+    request=PrivecyPolicySerializer,
+    responses={
+        200: PrivecyPolicySerializer,
+        403: OpenApiResponse(description="Permission denied"),
+        404: OpenApiResponse(description="Content not found")
+    }
+)
+
+class PrivacyPolicyUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = PrivecyPolicy.objects.all()
+    serializer_class = PrivecyPolicySerializer
     permission_classes = [IsAuthenticated, IsSuperUser]

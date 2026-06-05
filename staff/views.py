@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from .models import Staff
-from .models import Event , Banner , Singer
+from .models import Event , Banner , Singer , AboutUs
 from .serializers import (
     StaffRegistrationSerializer,
     StaffLoginSerializer,
@@ -31,7 +31,8 @@ from .serializers import (
     OwnProfileResponseSerializer,
     OrderSerializer,
     BannerSerializer,
-    SingerSerializer
+    SingerSerializer ,
+    AboutUsSerializer,
 )
 from .serializers import EventSerializer
 from staff.serializers import StaffTicketVerifySerializer
@@ -792,4 +793,50 @@ class SingerCreateView(generics.CreateAPIView):
 class SingerUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Singer.objects.all()
     serializer_class = SingerSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+
+@extend_schema(
+    tags=["AboutUs"],
+    summary="Get About Us content",
+    responses={
+        200: AboutUsSerializer(many=True)
+    }
+)
+class AboutUsListView(generics.ListAPIView):
+    serializer_class = AboutUsSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return AboutUs.objects.all()[:1]
+
+@extend_schema(
+    tags=["AboutUs"],
+    summary="Create About Us content",
+    request=AboutUsSerializer,
+    responses={
+        201: AboutUsSerializer,
+        400: None,
+        403: OpenApiResponse(description="permission denied "),
+    
+    }
+)
+class AboutUsCreateView(generics.CreateAPIView):
+    queryset = AboutUs.objects.all()
+    serializer_class = AboutUsSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]
+
+@extend_schema(
+    tags=["AboutUs"],
+    summary="Update or Delete About Us content",
+    request=AboutUsSerializer,
+    responses={
+        200: AboutUsSerializer,
+        403: OpenApiResponse(description="Permission denied"),
+        404: OpenApiResponse(description="Content not found")
+    }
+)
+class AboutUsUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = AboutUs.objects.all()
+    serializer_class = AboutUsSerializer
     permission_classes = [IsAuthenticated, IsSuperUser]

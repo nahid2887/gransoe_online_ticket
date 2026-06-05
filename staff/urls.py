@@ -19,6 +19,9 @@ from .views import (
     SingerListView,
     SingerCreateView,
     SingerUpdateDeleteView,
+    AboutUsListView,
+    AboutUsCreateView,
+    AboutUsUpdateDeleteView
 )
 
 router = DefaultRouter()
@@ -43,6 +46,9 @@ urlpatterns = [
     path('singers/', SingerListView.as_view(), name='singer-list'),
     path('singers/create/', SingerCreateView.as_view(), name='singer-create'),
     path('singers/<int:pk>/', SingerUpdateDeleteView.as_view(), name='singer-update-delete'),
+    path('about-us/', AboutUsListView.as_view(), name='aboutus-list'),
+    path('about-us/create/', AboutUsCreateView.as_view(), name='aboutus-create'),
+    path('about-us/<int:pk>/', AboutUsUpdateDeleteView.as_view(), name='aboutus-update-delete'),    
     path('me/', MyProfileView.as_view(), name='my-profile'),
     path('', include(router.urls)),
 ]

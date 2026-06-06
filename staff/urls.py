@@ -28,6 +28,9 @@ from .views import (
     TremsAndConditionListView,
     TremsAndConditionCreateView,
     TremsAndConditionUpdateDeleteView,
+    SendOTPView,
+    VerifyOTPView,
+    ResetPasswordView,
 
 )
 
@@ -62,6 +65,10 @@ urlpatterns = [
     path('terms-and-conditions/', TremsAndConditionListView.as_view(), name='terms-and-conditions-list'),
     path('terms-and-conditions/create/', TremsAndConditionCreateView.as_view(), name='terms-and-conditions-create'),
     path('terms-and-conditions/<int:pk>/', TremsAndConditionUpdateDeleteView.as_view(), name='terms-and-conditions-update-delete'),
+    path('forgot-password/send-otp/', SendOTPView.as_view(), name='send-otp'),
+    path('forgot-password/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
+    path('forgot-password/reset/', ResetPasswordView.as_view(), name='reset-password'),
+
     path('me/', MyProfileView.as_view(), name='my-profile'),
     path('', include(router.urls)),
 ]

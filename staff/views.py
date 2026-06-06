@@ -10,8 +10,12 @@ from django.db.models import Q, Count, Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from django.db import transaction
-
-from .models import Staff
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from .models import Staff 
+from .models import PasswordResetOTP
+from django.utils import timezone
+import random
 from .models import Event , Banner , Singer , AboutUs , PrivecyPolicy , TremsAndCondition
 from .serializers import (
     StaffRegistrationSerializer,
@@ -34,7 +38,10 @@ from .serializers import (
     SingerSerializer ,
     AboutUsSerializer,
     PrivecyPolicySerializer,
-    TremsAndConditionSerializer
+    TremsAndConditionSerializer,
+    SendOTPSerializer,
+    VerifyOTPSerializer,
+    ResetPasswordSerializer
 )
 from .serializers import EventSerializer
 from staff.serializers import StaffTicketVerifySerializer
@@ -42,7 +49,7 @@ from customer.serializers import TicketSerializer
 from customer.models import Ticket, Order, Customer
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-
+from rest_framework.views import APIView
 from rest_framework.permissions import BasePermission
 
 
@@ -941,3 +948,116 @@ class TremsAndConditionUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = TremsAndCondition.objects.all()
     serializer_class = TremsAndConditionSerializer
     permission_classes = [IsAuthenticated, IsSuperUser]
+
+
+class SendOTPView(APIView):
+
+    @extend_schema(
+        request=SendOTPSerializer,
+        responses={
+            200: {"type": "object"},
+            400: {"type": "object"},
+            404: {"type": "object"},
+        },
+        tags=["Forgot Password"],
+        description="Send OTP to registered email"
+    )
+    def post(self, request):
+        email = request.data.get("email")
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response({"error": "User not found"}, status=404)
+
+        otp = str(random.randint(100000, 999999))
+
+        # 🔥 always update latest OTP (overwrite old one)
+        PasswordResetOTP.objects.update_or_create(
+            email=email,
+            defaults={
+                "otp": otp,
+                "is_verified": False,
+            }
+        )
+
+        send_mail(
+            "Password Reset OTP",
+            f"Your OTP is: {otp}",
+            None,
+            [email]
+        )
+
+        return Response({"message": "OTP sent successfully"}, status=200)
+
+
+class VerifyOTPView(APIView):
+
+    @extend_schema(
+        request=VerifyOTPSerializer,
+        responses={
+            200: {"type": "object"},
+            400: {"type": "object"},
+        },
+        tags=["Forgot Password"],
+        description="Verify OTP"
+    )
+    def post(self, request):
+        email = request.data.get("email")
+        otp = request.data.get("otp")
+
+        otp_obj = PasswordResetOTP.objects.filter(email=email).first()
+
+        if not otp_obj:
+            return Response({"error": "OTP not found"}, status=400)
+
+        if otp_obj.is_expired():
+            return Response({"error": "OTP expired"}, status=400)
+
+        if otp_obj.otp != otp:
+            return Response({"error": "Invalid OTP"}, status=400)
+
+        otp_obj.is_verified = True
+        otp_obj.save()
+
+        return Response({"message": "OTP verified successfully"}, status=200)
+
+
+class ResetPasswordView(APIView):
+
+    @extend_schema(
+        request=ResetPasswordSerializer,
+        responses={
+            200: {"type": "object"},
+            400: {"type": "object"},
+            404: {"type": "object"},
+        },
+        tags=["Forgot Password"],
+        description="Reset password after OTP verification"
+    )
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        password = serializer.validated_data["password"]
+
+        otp_obj = PasswordResetOTP.objects.filter(
+            email=email,
+            is_verified=True
+        ).first()
+
+        if not otp_obj:
+            return Response({"error": "OTP not verified"}, status=400)
+
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            return Response({"error": "User not found"}, status=404)
+
+        user.set_password(password)
+        user.save()
+
+        # cleanup after success
+        PasswordResetOTP.objects.filter(email=email).delete()
+
+        return Response({"message": "Password reset successful"}, status=200)

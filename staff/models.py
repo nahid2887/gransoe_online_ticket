@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
 
 
 class Staff(models.Model):
@@ -105,3 +107,15 @@ class TremsAndCondition(models.Model):
     def __str__(self):
         return f"Terms and Conditions - {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
 
+
+
+
+
+class PasswordResetOTP(models.Model):
+    email = models.EmailField(unique=True)  # IMPORTANT: only one OTP per user
+    otp = models.CharField(max_length=6)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=5)

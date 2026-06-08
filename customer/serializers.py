@@ -196,3 +196,11 @@ class LogoutSerializer(serializers.Serializer):
         default=False,
         help_text="Set to true to log out of all active devices/sessions (requires authentication)."
     )
+
+
+
+class ContactUsSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=100)
+    email = serializers.EmailField()
+    subject = serializers.CharField(max_length=255)
+    message = serializers.CharField()

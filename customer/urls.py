@@ -13,6 +13,7 @@ from .views import (
     LogoutView,
     OrderListView,
     OrderDetailView,
+    ContactUsView
 )
 
 router = DefaultRouter()
@@ -33,5 +34,6 @@ urlpatterns = [
     path('webhook/stripe/', StripeWebhookView.as_view(), name='stripe-webhook'),
     path('orders/', OrderListView.as_view(), name='order-list'),
     path('orders/<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
+    path('contact-us/', ContactUsView.as_view(), name='contact-us'),
     path('', include(router.urls)),
 ]

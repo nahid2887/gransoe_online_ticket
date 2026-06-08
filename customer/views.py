@@ -2,14 +2,15 @@ from rest_framework import status, viewsets, serializers
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
-from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter , OpenApiExample
 from rest_framework.generics import GenericAPIView ,ListAPIView, RetrieveAPIView
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models import Q
 from django.db import models
-
+from .serializers import ContactUsSerializer
 from .models import Customer
+from django.core.mail import send_mail
 from .serializers import (
     CustomerRegistrationSerializer,
     CustomerLoginSerializer,
@@ -717,3 +718,60 @@ class OrderDetailView(RetrieveAPIView):
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
+
+
+
+
+@extend_schema(
+    tags=["Contact Us"],
+    request=ContactUsSerializer,
+    responses={
+        200: {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"}
+            }
+        }
+    },
+    description="Send a contact message to the application support email.",
+    examples=[
+        OpenApiExample(
+            "Contact Request",
+            value={
+                "name": "Nahid Hasan",
+                "email": "nahid@example.com",
+                "subject": "Need Support",
+                "message": "I am facing a login issue."
+            },
+            request_only=True,
+        )
+    ],
+)
+class ContactUsView(GenericAPIView):
+    serializer_class = ContactUsSerializer
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+
+        send_mail(
+            subject=f"Contact Us - {data['subject']}",
+            message=f"""
+Name: {data['name']}
+Email: {data['email']}
+
+Message:
+{data['message']}
+""",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.DEFAULT_FROM_EMAIL],
+            fail_silently=False,
+        )
+
+        return Response(
+            {"message": "Your message has been sent successfully."},
+            status=status.HTTP_200_OK,
+        )

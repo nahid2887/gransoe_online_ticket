@@ -286,6 +286,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     customer = serializers.SerializerMethodField()
+    event = EventSerializer(read_only=True)
 
     class Meta:
         model = Order

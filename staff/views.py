@@ -616,26 +616,60 @@ class SuperuserProfileView(GenericAPIView):
         return self.put(request, *args, **kwargs)
 
 
-@extend_schema(
-    request=SuperuserPasswordChangeSerializer,
-    responses=SuperuserPasswordChangeResponseSerializer,
-    description="Change the logged-in superuser password.",
-)
 class SuperuserPasswordChangeView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        request=SuperuserPasswordChangeSerializer,
+        responses=SuperuserPasswordChangeResponseSerializer,
+        description="Change the logged-in superuser password."
+    )
     def post(self, request, *args, **kwargs):
+
         user = request.user
+
+        # ❌ Not superuser error
         if not user.is_superuser:
-            return Response({'detail': 'User is not a superuser.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {
+                    "success": False,
+                    "message": "Only superusers can change password",
+                    "data": None
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
 
-        serializer = SuperuserPasswordChangeSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
+        serializer = SuperuserPasswordChangeSerializer(
+            data=request.data,
+            context={'request': request}
+        )
 
+        # ❌ Validation error response
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "message": "Validation failed",
+                    "errors": serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ✅ change password
         user.set_password(serializer.validated_data['new_password'])
         user.save(update_fields=['password'])
 
-        return Response({'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "success": True,
+                "message": "Password changed successfully",
+                "data": {
+                    "user_id": user.id,
+                    "username": user.username
+                }
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 @extend_schema(

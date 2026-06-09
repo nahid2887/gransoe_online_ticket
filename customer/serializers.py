@@ -103,12 +103,17 @@ class PurchaseSerializer(serializers.Serializer):
     event_id = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value=1)
 
+class EventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = '__all__'
 
 class TicketSerializer(serializers.ModelSerializer):
     qr_image = serializers.SerializerMethodField()
     is_verified = serializers.BooleanField(read_only=True)
     verified_at = serializers.DateTimeField(read_only=True)
     verified_by = serializers.SerializerMethodField(read_only=True)
+    event = EventSerializer(read_only=True)
 
     class Meta:
         model = getattr(__import__('customer.models', fromlist=['Ticket']), 'Ticket')
@@ -146,10 +151,7 @@ class CustomerSerializer(serializers.ModelSerializer):
             'username',
         )
 
-class EventSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Event
-        fields = '__all__'
+
 
 
 class OrderSerializer(serializers.ModelSerializer):

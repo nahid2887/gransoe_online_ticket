@@ -177,7 +177,7 @@ class PurchaseView(GenericAPIView):
             if quantity > event.available_tickets:
                 return Response({'detail': 'Not enough tickets available'}, status=status.HTTP_400_BAD_REQUEST)
 
-            total = event.price_per_ticket * quantity + event.platform_fee
+            total = (event.price_per_ticket + event.ticketing_fee) * quantity + event.platform_fee
             reservation_expires_at = timezone.now() + timedelta(minutes=5)
             event.available_tickets = models.F('available_tickets') - quantity
             event.save()
@@ -204,7 +204,7 @@ class PurchaseView(GenericAPIView):
                         'price_data': {
                             'currency': 'dkk',
                             'product_data': {'name': event.title},
-                            'unit_amount': int(event.price_per_ticket * 100),
+                            'unit_amount': int((event.price_per_ticket + event.ticketing_fee) * 100),
                         },
                         'quantity': quantity,
                     }

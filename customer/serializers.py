@@ -97,7 +97,7 @@ class UpcomingEventSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'title', 'description', 'venue', 'singer','age', 'image', 'date', 'time',
             'ticket_type', 'available_tickets', 'max_per_order', 'price_per_ticket',
-            'platform_fee', 'created_at', 'updated_at', 'external_url'
+            'platform_fee', 'created_at', 'updated_at', 'external_url','ticketing_fee'
         )
 
 

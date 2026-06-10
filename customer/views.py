@@ -583,7 +583,7 @@ class UpcomingEventListView(GenericAPIView):
         if date:
             events = events.filter(date=date)
 
-        # Search by title and venue
+        # Search
         search = request.query_params.get('search')
         if search:
             events = events.filter(
@@ -591,22 +591,20 @@ class UpcomingEventListView(GenericAPIView):
                 Q(venue__icontains=search)
             )
 
-        events = events.order_by('date', 'time', '-created_at')
+        # ✅ Singer filter (NEW)
+        singer = request.query_params.get('singer')
+
+        if singer:
+            if singer.isdigit():
+                events = events.filter(singer__id=singer)
+            else:
+                events = events.filter(singer__name__icontains=singer)
 
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@extend_schema(
-    responses={
-        200: UpcomingEventSerializer,
-        404: inline_serializer(
-            name='UpcomingEventDetailNotFoundResponse',
-            fields={'detail': serializers.CharField()},
-        ),
-    },
-    description='Return a single upcoming event by ID.',
-)
+        
 class UpcomingEventDetailView(GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = UpcomingEventSerializer

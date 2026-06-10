@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
-
+from django.core.exceptions import ValidationError
 
 class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='staff')
@@ -18,6 +18,17 @@ class Staff(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+class Singer(models.Model):
+    name = models.CharField(max_length=255)
+    location = models.CharField(max_length=255)
+    bio = models.TextField()
+    image = models.ImageField(upload_to='singers/')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
 
 class Event(models.Model):
     TICKET_TYPE_CHOICES = [
@@ -31,6 +42,8 @@ class Event(models.Model):
     image = models.ImageField(upload_to='events/', blank=True)
     date = models.DateField(null=True, blank=True)
     time = models.TimeField(null=True, blank=True)
+    singer = models.ForeignKey(Singer, on_delete=models.SET_NULL, null=True, blank=True)
+    external_url = models.URLField(blank=True, null=True)
 
     # Ticket fields (embedded on the Event model)
     ticket_type = models.CharField(max_length=50, choices=TICKET_TYPE_CHOICES, default='General Admission')
@@ -43,11 +56,15 @@ class Event(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
+
     def __str__(self):
         return f"{self.title} ({self.date})"
 
     class Meta:
         ordering = ['-created_at']
+    
+    
 
 class Banner(models.Model):
     title = models.CharField(max_length=255)
@@ -62,16 +79,6 @@ class Banner(models.Model):
 
 
 
-class Singer(models.Model):
-    name = models.CharField(max_length=255)
-    location = models.CharField(max_length=255)
-    bio = models.TextField()
-    image = models.ImageField(upload_to='singers/')
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
 
 class AboutUs(models.Model):
     content = models.TextField()

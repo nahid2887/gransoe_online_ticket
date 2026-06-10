@@ -175,11 +175,7 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = (
-            'id', 'title', 'description', 'venue', 'age', 'image', 'date', 'time',
-            'ticket_type', 'available_tickets', 'max_per_order', 'price_per_ticket', 'platform_fee',
-            'tickets_sold', 'created_by', 'created_at', 'updated_at'
-        )
+        fields = '__all__'
         read_only_fields = ('created_at', 'updated_at', 'created_by')
 
     @extend_schema_field(serializers.JSONField(allow_null=True))

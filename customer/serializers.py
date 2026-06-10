@@ -5,6 +5,7 @@ from drf_spectacular.utils import extend_schema_field
 from .models import Customer, Order, Ticket
 from datetime import date
 from staff.models import Event
+from staff.serializers import SingerSerializer
 
 
 class CustomerDetailSerializer(serializers.ModelSerializer):
@@ -90,12 +91,13 @@ class AuthResponseSerializer(serializers.Serializer):
 
 
 class UpcomingEventSerializer(serializers.ModelSerializer):
+    singer = SingerSerializer(read_only=True)
     class Meta:
         model = Event
         fields = (
-            'id', 'title', 'description', 'venue', 'age', 'image', 'date', 'time',
+            'id', 'title', 'description', 'venue', 'singer','age', 'image', 'date', 'time',
             'ticket_type', 'available_tickets', 'max_per_order', 'price_per_ticket',
-            'platform_fee', 'created_at', 'updated_at',
+            'platform_fee', 'created_at', 'updated_at', 'external_url'
         )
 
 

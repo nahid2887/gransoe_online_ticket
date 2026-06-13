@@ -4,12 +4,64 @@ info:
   version: 1.0.0
   description: Customer Registration and Management API
 paths:
+  /api/contact-us/:
+    post:
+      operationId: contact_us_create
+      description: Send a contact message to the application support email.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - Contact Us
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactUs'
+            examples:
+              ContactRequest:
+                value:
+                  name: Nahid Hasan
+                  email: nahid@example.com
+                  subject: Need Support
+                  message: I am facing a login issue.
+                summary: Contact Request
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContactUs'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ContactUs'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+          description: ''
   /api/customers/:
     get:
       operationId: customers_list
       description: |-
         ViewSet for retrieving customer details.
         Requires JWT authentication.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - customers
       security:
@@ -31,6 +83,12 @@ paths:
         ViewSet for retrieving customer details.
         Requires JWT authentication.
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: user__id
         schema:
@@ -52,7 +110,29 @@ paths:
   /api/events/upcoming/:
     get:
       operationId: events_upcoming_list
-      description: Return all upcoming events that anyone can view.
+      description: Return upcoming events with optional filters.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: query
+        name: date
+        schema:
+          type: string
+        description: Filter by date (YYYY-MM-DD)
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Search by title or venue
+      - in: query
+        name: venue
+        schema:
+          type: string
+        description: Filter by venue
       tags:
       - events
       security:
@@ -70,8 +150,13 @@ paths:
   /api/events/upcoming/{id}/:
     get:
       operationId: events_upcoming_retrieve
-      description: Return a single upcoming event by ID.
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -89,17 +174,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/UpcomingEvent'
           description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpcomingEventDetailNotFoundResponse'
-          description: ''
   /api/login/:
     post:
       operationId: login_create
       description: Login with email and password. Returns customer details, access
         token, and refresh token in cookie.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - login
       requestBody:
@@ -129,6 +215,13 @@ paths:
       operationId: logout_create
       description: Logout user. Can blacklist a specific refresh token or all outstanding
         tokens for the user.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - logout
       requestBody:
@@ -161,6 +254,13 @@ paths:
   /api/my-tickets/:
     get:
       operationId: my_tickets_retrieve
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - my-tickets
       security:
@@ -177,6 +277,12 @@ paths:
       operationId: my_tickets_retrieve_2
       description: Return a single ticket owned by the authenticated customer.
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -199,11 +305,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/MyTicketNotFoundResponse'
           description: ''
+  /api/orders/:
+    get:
+      operationId: orders_list
+      description: Get all orders of the logged-in user
+      summary: Order List
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+          description: ''
+  /api/orders/{id}/:
+    get:
+      operationId: orders_retrieve
+      description: Get single order by ID (only if belongs to user)
+      summary: Order Detail
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
   /api/purchase/:
     post:
       operationId: purchase_create
       description: Purchase tickets for an event. If Stripe is configured, returns
         PaymentIntent client_secret; otherwise completes immediately.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - purchase
       requestBody:
@@ -231,6 +397,13 @@ paths:
     post:
       operationId: register_create
       description: Register a new customer account with required details.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - register
       requestBody:
@@ -264,6 +437,12 @@ paths:
         - YAML: application/vnd.oai.openapi
         - JSON: application/vnd.oai.openapi+json
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: query
         name: format
         schema:
@@ -276,106 +455,8 @@ paths:
         schema:
           type: string
           enum:
-          - af
-          - ar
-          - ar-dz
-          - ast
-          - az
-          - be
-          - bg
-          - bn
-          - br
-          - bs
-          - ca
-          - ckb
-          - cs
-          - cy
           - da
-          - de
-          - dsb
-          - el
           - en
-          - en-au
-          - en-gb
-          - eo
-          - es
-          - es-ar
-          - es-co
-          - es-mx
-          - es-ni
-          - es-ve
-          - et
-          - eu
-          - fa
-          - fi
-          - fr
-          - fy
-          - ga
-          - gd
-          - gl
-          - he
-          - hi
-          - hr
-          - hsb
-          - ht
-          - hu
-          - hy
-          - ia
-          - id
-          - ig
-          - io
-          - is
-          - it
-          - ja
-          - ka
-          - kab
-          - kk
-          - km
-          - kn
-          - ko
-          - ky
-          - lb
-          - lt
-          - lv
-          - mk
-          - ml
-          - mn
-          - mr
-          - ms
-          - my
-          - nb
-          - ne
-          - nl
-          - nn
-          - os
-          - pa
-          - pl
-          - pt
-          - pt-br
-          - ro
-          - ru
-          - sk
-          - sl
-          - sq
-          - sr
-          - sr-latn
-          - sv
-          - sw
-          - ta
-          - te
-          - tg
-          - th
-          - tk
-          - tr
-          - tt
-          - udm
-          - ug
-          - uk
-          - ur
-          - uz
-          - vi
-          - zh-hans
-          - zh-hant
       tags:
       - schema
       security:
@@ -401,10 +482,431 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/staff/about-us/:
+    get:
+      operationId: staff_about_us_list
+      summary: Get About Us content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - AboutUs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AboutUs'
+          description: ''
+  /api/staff/about-us/{id}/:
+    get:
+      operationId: staff_about_us_retrieve
+      summary: Update or Delete About Us content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - AboutUs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AboutUs'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+    put:
+      operationId: staff_about_us_update
+      summary: Update or Delete About Us content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - AboutUs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AboutUs'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AboutUs'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AboutUs'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AboutUs'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+    patch:
+      operationId: staff_about_us_partial_update
+      summary: Update or Delete About Us content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - AboutUs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAboutUs'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAboutUs'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAboutUs'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AboutUs'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+    delete:
+      operationId: staff_about_us_destroy
+      summary: Update or Delete About Us content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - AboutUs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AboutUs'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+  /api/staff/about-us/create/:
+    post:
+      operationId: staff_about_us_create_create
+      summary: Create About Us content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - AboutUs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AboutUs'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AboutUs'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AboutUs'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AboutUs'
+          description: ''
+        '400':
+          description: No response body
+        '403':
+          description: 'permission denied '
+  /api/staff/banners/:
+    get:
+      operationId: staff_banners_list
+      summary: Get latest 5 banners
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - Banner
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Banner'
+          description: ''
+  /api/staff/banners/{id}/:
+    get:
+      operationId: staff_banners_retrieve
+      summary: Update or Delete Banner
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Banner
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Banner'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Banner not found
+    put:
+      operationId: staff_banners_update
+      summary: Update or Delete Banner
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Banner
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Banner'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Banner'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Banner'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Banner'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Banner not found
+    patch:
+      operationId: staff_banners_partial_update
+      summary: Update or Delete Banner
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Banner
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBanner'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBanner'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBanner'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Banner'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Banner not found
+    delete:
+      operationId: staff_banners_destroy
+      summary: Update or Delete Banner
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Banner
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Banner'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Banner not found
+  /api/staff/banners/create/:
+    post:
+      operationId: staff_banners_create_create
+      summary: created Banners
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - Banner
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Banner'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Banner'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Banner'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Banner'
+          description: ''
+        '400':
+          description: No response body
+        '403':
+          description: 'permission denied '
   /api/staff/events/:
     get:
       operationId: staff_events_list
       description: List all events
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - Staff Events
       security:
@@ -421,6 +923,13 @@ paths:
     post:
       operationId: staff_events_create
       description: Create a new event (superuser only)
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - Staff Events
       requestBody:
@@ -449,6 +958,12 @@ paths:
       operationId: staff_events_retrieve
       description: Retrieve a single event by ID
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -470,6 +985,12 @@ paths:
       operationId: staff_events_update
       description: Update an event (superuser only)
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -503,6 +1024,12 @@ paths:
       operationId: staff_events_partial_update
       description: Partially update an event (superuser only)
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -535,6 +1062,12 @@ paths:
       operationId: staff_events_destroy
       description: Delete an event (superuser only)
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -548,10 +1081,152 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/staff/forgot-password/reset/:
+    post:
+      operationId: staff_forgot_password_reset_create
+      description: Reset password after OTP verification
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - Forgot Password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+  /api/staff/forgot-password/send-otp/:
+    post:
+      operationId: staff_forgot_password_send_otp_create
+      description: Send OTP to registered email
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - Forgot Password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendOTP'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SendOTP'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendOTP'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+  /api/staff/forgot-password/verify-otp/:
+    post:
+      operationId: staff_forgot_password_verify_otp_create
+      description: Verify OTP
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - Forgot Password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOTP'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VerifyOTP'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VerifyOTP'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
   /api/staff/login/:
     post:
       operationId: staff_login_create
       description: Staff login. Returns staff details and tokens.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - staff
       requestBody:
@@ -581,6 +1256,13 @@ paths:
       operationId: staff_me_retrieve
       description: Get the authenticated user own profile details. Supports customer,
         staff, and superuser accounts.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - Staff Profile
       security:
@@ -592,10 +1274,224 @@ paths:
               schema:
                 $ref: '#/components/schemas/OwnProfileResponse'
           description: ''
+  /api/staff/privacy-policy/:
+    get:
+      operationId: staff_privacy_policy_list
+      summary: Get Privacy Policy content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - PrivacyPolicy
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PrivecyPolicy'
+          description: ''
+  /api/staff/privacy-policy/{id}/:
+    get:
+      operationId: staff_privacy_policy_retrieve
+      summary: Update or Delete Privacy Policy content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - PrivacyPolicy
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivecyPolicy'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+    put:
+      operationId: staff_privacy_policy_update
+      summary: Update or Delete Privacy Policy content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - PrivacyPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivecyPolicy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrivecyPolicy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrivecyPolicy'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivecyPolicy'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+    patch:
+      operationId: staff_privacy_policy_partial_update
+      summary: Update or Delete Privacy Policy content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - PrivacyPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPrivecyPolicy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPrivecyPolicy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPrivecyPolicy'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivecyPolicy'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+    delete:
+      operationId: staff_privacy_policy_destroy
+      summary: Update or Delete Privacy Policy content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - PrivacyPolicy
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivecyPolicy'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+  /api/staff/privacy-policy/create/:
+    post:
+      operationId: staff_privacy_policy_create_create
+      summary: Create Privacy Policy content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - PrivacyPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivecyPolicy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrivecyPolicy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrivecyPolicy'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivecyPolicy'
+          description: ''
+        '400':
+          description: No response body
+        '403':
+          description: 'permission denied '
   /api/staff/register/:
     post:
       operationId: staff_register_create
       description: Register a new staff member with required details.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - staff
       requestBody:
@@ -620,10 +1516,224 @@ paths:
               schema:
                 $ref: '#/components/schemas/StaffAuthResponse'
           description: ''
+  /api/staff/singers/:
+    get:
+      operationId: staff_singers_list
+      summary: Get singers
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - Singer
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Singer'
+          description: ''
+  /api/staff/singers/{id}/:
+    get:
+      operationId: staff_singers_retrieve
+      summary: Update or Delete Singer
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Singer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Singer'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Singer not found
+    put:
+      operationId: staff_singers_update
+      summary: Update or Delete Singer
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Singer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Singer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Singer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Singer'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Singer'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Singer not found
+    patch:
+      operationId: staff_singers_partial_update
+      summary: Update or Delete Singer
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Singer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSinger'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSinger'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSinger'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Singer'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Singer not found
+    delete:
+      operationId: staff_singers_destroy
+      summary: Update or Delete Singer
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Singer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Singer'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Singer not found
+  /api/staff/singers/create/:
+    post:
+      operationId: staff_singers_create_create
+      summary: created Singers
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - Singer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Singer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Singer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Singer'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Singer'
+          description: ''
+        '400':
+          description: No response body
+        '403':
+          description: 'permission denied '
   /api/staff/staffs/:
     get:
       operationId: staff_staffs_list
       description: List all staff members (superuser only).
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - Staff Management
       security:
@@ -642,6 +1752,12 @@ paths:
       operationId: staff_staffs_retrieve
       description: Retrieve a single staff member by ID (superuser only).
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -663,6 +1779,12 @@ paths:
       operationId: staff_staffs_update
       description: Update a staff member details including role (superuser only).
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -697,6 +1819,12 @@ paths:
       description: Partially update a staff member details including role (superuser
         only).
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -730,6 +1858,12 @@ paths:
       description: Delete a staff member profile and their associated User account
         (superuser only).
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -751,6 +1885,13 @@ paths:
     post:
       operationId: staff_super_change_password_create
       description: Change the logged-in superuser password.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - staff
       requestBody:
@@ -779,6 +1920,13 @@ paths:
       operationId: staff_super_dashboard_retrieve
       description: Get the super admin dashboard summary, monthly revenue, and recent
         completed orders.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - Staff Dashboard
       security:
@@ -793,8 +1941,13 @@ paths:
   /api/staff/super/login/:
     post:
       operationId: staff_super_login_create
-      description: Superuser login using email and password. Returns user details
-        and tokens.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - staff
       requestBody:
@@ -817,12 +1970,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuperuserAuthResponse'
+                $ref: '#/components/schemas/SuperuserLogin'
           description: ''
   /api/staff/super/profile/:
     get:
       operationId: staff_super_profile_retrieve
       description: Get the logged-in superuser profile.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - staff
       security:
@@ -837,6 +1997,13 @@ paths:
     put:
       operationId: staff_super_profile_update
       description: Update the logged-in superuser profile information.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - staff
       requestBody:
@@ -862,6 +2029,13 @@ paths:
     patch:
       operationId: staff_super_profile_partial_update
       description: Get the logged-in superuser profile.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - staff
       requestBody:
@@ -884,10 +2058,249 @@ paths:
               schema:
                 $ref: '#/components/schemas/SuperuserDetail'
           description: ''
+  /api/staff/superuser/orders/:
+    get:
+      operationId: staff_superuser_orders_list
+      description: Retrieve all orders.
+      summary: Order List
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - Superuser
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+          description: ''
+  /api/staff/terms-and-conditions/:
+    get:
+      operationId: staff_terms_and_conditions_list
+      summary: Get Terms and Conditions content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - TermsAndConditions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TremsAndCondition'
+          description: ''
+  /api/staff/terms-and-conditions/{id}/:
+    get:
+      operationId: staff_terms_and_conditions_retrieve
+      summary: Update or Delete Terms and Conditions content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - TermsAndConditions
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TremsAndCondition'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+    put:
+      operationId: staff_terms_and_conditions_update
+      summary: Update or Delete Terms and Conditions content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - TermsAndConditions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TremsAndCondition'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TremsAndCondition'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TremsAndCondition'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TremsAndCondition'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+    patch:
+      operationId: staff_terms_and_conditions_partial_update
+      summary: Update or Delete Terms and Conditions content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - TermsAndConditions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTremsAndCondition'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTremsAndCondition'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTremsAndCondition'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TremsAndCondition'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+    delete:
+      operationId: staff_terms_and_conditions_destroy
+      summary: Update or Delete Terms and Conditions content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - TermsAndConditions
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TremsAndCondition'
+          description: ''
+        '403':
+          description: Permission denied
+        '404':
+          description: Content not found
+  /api/staff/terms-and-conditions/create/:
+    post:
+      operationId: staff_terms_and_conditions_create_create
+      summary: Create Terms and Conditions content
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
+      tags:
+      - TermsAndConditions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TremsAndCondition'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TremsAndCondition'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TremsAndCondition'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TremsAndCondition'
+          description: ''
+        '400':
+          description: No response body
+        '403':
+          description: 'permission denied '
   /api/staff/upcoming-events/:
     get:
       operationId: staff_upcoming_events_list
       description: List upcoming events for staff users.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - Staff Upcoming Events
       security:
@@ -906,6 +2319,12 @@ paths:
       operationId: staff_upcoming_events_retrieve
       description: Retrieve a single upcoming event by ID for staff users.
       parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       - in: path
         name: id
         schema:
@@ -928,6 +2347,13 @@ paths:
       operationId: staff_verify_ticket_create
       description: Verify a ticket for a given event by `tracking_number` or `qr_data`.
         Marks ticket as verified once.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - Staff Events
       requestBody:
@@ -957,6 +2383,13 @@ paths:
       description: |-
         Takes a refresh type JSON web token and returns an access type JSON web
         token if the refresh token is valid.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - token
       requestBody:
@@ -983,6 +2416,13 @@ paths:
       operationId: webhook_stripe_create
       description: Stripe webhook endpoint (optional) to finalize orders on payment
         success.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - webhook
       security:
@@ -996,6 +2436,13 @@ paths:
       operationId: webhook_stripe_create_2
       description: Stripe webhook endpoint (optional) to finalize orders on payment
         success.
+      parameters:
+      - in: header
+        name: Accept-Language
+        schema:
+          type: string
+        description: Language code to get translated content (e.g., 'da' for Danish,
+          'en' for English).
       tags:
       - webhook
       security:
@@ -1006,6 +2453,22 @@ paths:
           description: No response body
 components:
   schemas:
+    AboutUs:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - content
+      - created_at
+      - id
     AuthResponse:
       type: object
       description: Response serializer for authentication endpoints
@@ -1023,6 +2486,46 @@ components:
       - customer
       - message
       - refresh_token
+    Banner:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        image:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - image
+      - title
+    ContactUs:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        subject:
+          type: string
+          maxLength: 255
+        message:
+          type: string
+      required:
+      - email
+      - message
+      - name
+      - subject
     CustomerDetail:
       type: object
       properties:
@@ -1208,6 +2711,11 @@ components:
           type: string
           format: time
           nullable: true
+        external_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
         ticket_type:
           $ref: '#/components/schemas/TicketTypeEnum'
         available_tickets:
@@ -1228,12 +2736,10 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        tickets_sold:
-          type: integer
-          readOnly: true
-        created_by:
-          nullable: true
-          readOnly: true
+        ticketing_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
         created_at:
           type: string
           format: date-time
@@ -1242,11 +2748,15 @@ components:
           type: string
           format: date-time
           readOnly: true
+        singer:
+          type: integer
+          nullable: true
+        created_by:
+          type: integer
+          nullable: true
       required:
       - created_at
-      - created_by
       - id
-      - tickets_sold
       - title
       - updated_at
     GenderEnum:
@@ -1298,11 +2808,13 @@ components:
         id:
           type: integer
           readOnly: true
-        user:
-          type: integer
+        customer:
+          type: string
           readOnly: true
         event:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/Event'
+          readOnly: true
         quantity:
           type: integer
           maximum: 9223372036854775807
@@ -1312,25 +2824,20 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          readOnly: true
         platform_fee:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          readOnly: true
         status:
-          allOf:
-          - $ref: '#/components/schemas/StatusEnum'
-          readOnly: true
+          $ref: '#/components/schemas/StatusEnum'
         reservation_expires_at:
           type: string
           format: date-time
-          readOnly: true
           nullable: true
         stripe_payment_intent:
           type: string
-          readOnly: true
           nullable: true
+          maxLength: 255
         created_at:
           type: string
           format: date-time
@@ -1342,16 +2849,12 @@ components:
           readOnly: true
       required:
       - created_at
+      - customer
       - event
       - id
-      - platform_fee
       - quantity
-      - reservation_expires_at
-      - status
-      - stripe_payment_intent
       - tickets
       - total_amount
-      - user
     OwnProfileResponse:
       type: object
       properties:
@@ -1394,10 +2897,44 @@ components:
       - profile_type
       - role
       - username
+    PatchedAboutUs:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedBanner:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        image:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedEvent:
       type: object
       properties:
         id:
+          type: integer
+          readOnly: true
+        created_by:
+          nullable: true
+          readOnly: true
+        tickets_sold:
           type: integer
           readOnly: true
         title:
@@ -1422,6 +2959,11 @@ components:
           type: string
           format: time
           nullable: true
+        external_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
         ticket_type:
           $ref: '#/components/schemas/TicketTypeEnum'
         available_tickets:
@@ -1442,17 +2984,51 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        tickets_sold:
-          type: integer
-          readOnly: true
-        created_by:
-          nullable: true
-          readOnly: true
+        ticketing_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
         created_at:
           type: string
           format: date-time
           readOnly: true
         updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        singer:
+          type: integer
+          nullable: true
+    PatchedPrivecyPolicy:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedSinger:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        location:
+          type: string
+          maxLength: 255
+        bio:
+          type: string
+        image:
+          type: string
+          format: uri
+        created_at:
           type: string
           format: date-time
           readOnly: true
@@ -1498,6 +3074,34 @@ components:
         date_joined:
           type: string
           format: date-time
+    PatchedTremsAndCondition:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PrivecyPolicy:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - content
+      - created_at
+      - id
     Purchase:
       type: object
       properties:
@@ -1509,6 +3113,58 @@ components:
       required:
       - event_id
       - quantity
+    ResetPassword:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        confirm_password:
+          type: string
+          minLength: 8
+      required:
+      - confirm_password
+      - email
+      - password
+    SendOTP:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
+    Singer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        location:
+          type: string
+          maxLength: 255
+        bio:
+          type: string
+        image:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - bio
+      - created_at
+      - id
+      - image
+      - location
+      - name
     StaffAuthResponse:
       type: object
       properties:
@@ -1633,22 +3289,6 @@ components:
         * `pending` - Pending
         * `completed` - Completed
         * `failed` - Failed
-    SuperuserAuthResponse:
-      type: object
-      properties:
-        superuser:
-          $ref: '#/components/schemas/SuperuserDetail'
-        access_token:
-          type: string
-        refresh_token:
-          type: string
-        message:
-          type: string
-      required:
-      - access_token
-      - message
-      - refresh_token
-      - superuser
     SuperuserDashboardResponse:
       type: object
       properties:
@@ -1768,7 +3408,9 @@ components:
           type: string
           readOnly: true
         event:
-          type: integer
+          allOf:
+          - $ref: '#/components/schemas/Event'
+          readOnly: true
         is_verified:
           type: boolean
           readOnly: true
@@ -1808,6 +3450,22 @@ components:
       required:
       - access
       - refresh
+    TremsAndCondition:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - content
+      - created_at
+      - id
     UpcomingEvent:
       type: object
       properties:
@@ -1822,6 +3480,10 @@ components:
         venue:
           type: string
           maxLength: 255
+        singer:
+          allOf:
+          - $ref: '#/components/schemas/Singer'
+          readOnly: true
         age:
           type: string
           maxLength: 50
@@ -1864,18 +3526,33 @@ components:
           type: string
           format: date-time
           readOnly: true
+        external_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        ticketing_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
       required:
       - created_at
       - id
+      - singer
       - title
       - updated_at
-    UpcomingEventDetailNotFoundResponse:
+    VerifyOTP:
       type: object
       properties:
-        detail:
+        email:
           type: string
+          format: email
+        otp:
+          type: string
+          maxLength: 6
       required:
-      - detail
+      - email
+      - otp
   securitySchemes:
     jwtAuth:
       type: http

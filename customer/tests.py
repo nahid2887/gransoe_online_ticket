@@ -94,3 +94,41 @@ class LogoutTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["message"], "Logout successful")
         self.assertEqual(response.cookies["refresh_token"].value, "")
+
+
+class TranslationTests(APITestCase):
+    def setUp(self):
+        from staff.models import Event
+        from django.utils import timezone
+        from datetime import timedelta
+        today = timezone.localdate()
+        # Create an event for testing
+        self.event = Event.objects.create(
+            title="Summer Rock Festival",
+            description="A grand outdoor rock concert featuring local bands.",
+            venue="Roskilde Stage",
+            available_tickets=100,
+            price_per_ticket=250.00,
+            platform_fee=10.00,
+            ticketing_fee=5.00,
+            date=today + timedelta(days=1),
+            time=timezone.now().time()
+        )
+        self.list_url = reverse('customer:upcoming-events')
+
+    def test_upcoming_events_in_english_by_default(self):
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check that it returns the event title in English
+        self.assertEqual(response.data[0]['title'], "Summer Rock Festival")
+        self.assertEqual(response.data[0]['description'], "A grand outdoor rock concert featuring local bands.")
+        self.assertEqual(response.data[0]['venue'], "Roskilde Stage")
+
+    def test_upcoming_events_translated_to_danish(self):
+        response = self.client.get(self.list_url, HTTP_ACCEPT_LANGUAGE='da')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check that it returns the translated fields in Danish
+        self.assertIn("Sommer", response.data[0]['title'])
+        self.assertIn("rockkoncert", response.data[0]['description'].lower())
+        self.assertIn("Scene", response.data[0]['venue'])
+
